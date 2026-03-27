@@ -50,6 +50,20 @@ const MOCK_WORD_RESULT = {
     {
       partOfSpeech: 'exclamation',
       definitions: [
+        { definition: '你好 (问候, 致意)' }
+      ]
+    },
+    {
+      partOfSpeech: 'noun',
+      definitions: [
+        { definition: '招呼 (问候, 致意)' }
+      ]
+    }
+  ],
+  definitions: [
+    {
+      partOfSpeech: 'exclamation',
+      definitions: [
         { definition: 'used as a greeting or to begin a phone conversation', example: 'hello there, Katie!' }
       ]
     },
@@ -59,6 +73,10 @@ const MOCK_WORD_RESULT = {
         { definition: 'an utterance of "hello"; a greeting', example: 'she was getting lots of hellos' }
       ]
     }
+  ],
+  examples: [
+    'hello there, Katie!',
+    'she was getting lots of hellos'
   ],
   lang: 'en'
 };
@@ -355,7 +373,7 @@ test.describe('Content Script — Popup Dismissal', () => {
 });
 
 test.describe('Content Script — Word vs Sentence Rendering', () => {
-  test('English word shows header, phonetic, translation and meanings', async ({ testPage }) => {
+  test('English word shows header, phonetic, translation, meanings and definitions', async ({ testPage }) => {
     await ctrlSelectElement(testPage, '#english-word');
     await expect(testPage.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
 
@@ -368,16 +386,22 @@ test.describe('Content Script — Word vs Sentence Rendering', () => {
     // Translation
     await expect(testPage.locator('.sakura-translation-text')).toHaveText('你好');
 
-    // Meanings (POS tags are translated to target language zh-CN)
+    // Meanings (localized — POS tags are translated to target language zh-CN)
     const posTags = testPage.locator('.sakura-meaning-pos');
     await expect(posTags.first()).toContainText('感叹词');
 
     const defs = testPage.locator('.sakura-meaning-def');
-    await expect(defs.first()).toContainText('used as a greeting');
+    await expect(defs.first()).toContainText('你好');
 
-    // Examples
-    const examples = testPage.locator('.sakura-meaning-example');
-    await expect(examples.first()).toContainText('hello there, Katie!');
+    // Definitions section (source language definitions from Google dt=md)
+    const defSection = testPage.locator('.sakura-definitions');
+    await expect(defSection).toBeAttached();
+    await expect(defSection.locator('.sakura-def-text').first()).toContainText('used as a greeting');
+
+    // Examples section (from Google dt=ex)
+    const exSection = testPage.locator('.sakura-examples');
+    await expect(exSection).toBeAttached();
+    await expect(exSection.locator('.sakura-example-item').first()).toContainText('hello there, Katie!');
   });
 
   test('English sentence shows original + translation', async ({ testPage }) => {

@@ -616,7 +616,7 @@
       `;
     }
 
-    // Dictionary meanings
+    // Dictionary meanings (localized from Google Translate)
     if (result.meanings && result.meanings.length > 0) {
       html += '<div class="sakura-divider"></div>';
       html += '<div class="sakura-meanings">';
@@ -635,6 +635,47 @@
         });
 
         html += `</div>`;
+      });
+
+      html += '</div>';
+    }
+
+    // Detailed definitions (from Google dt=md, source language)
+    if (result.definitions && result.definitions.length > 0) {
+      html += '<div class="sakura-divider"></div>';
+      html += '<div class="sakura-definitions">';
+      html += '<div class="sakura-section-title">Definitions</div>';
+
+      result.definitions.forEach(group => {
+        html += `<div class="sakura-meaning-group">`;
+        html += `<span class="sakura-meaning-pos">${escapeHtml(translatePOS(group.partOfSpeech))}</span>`;
+
+        const defs = (group.definitions || []).slice(0, 3);
+        defs.forEach((def, idx) => {
+          html += `<div class="sakura-def-item">`;
+          html += `<span class="sakura-def-number">${idx + 1}.</span>`;
+          html += `<span class="sakura-def-text">${escapeHtml(def.definition)}</span>`;
+          html += `</div>`;
+          if (def.example) {
+            html += `<div class="sakura-meaning-example">"${escapeHtml(def.example)}"</div>`;
+          }
+        });
+
+        html += `</div>`;
+      });
+
+      html += '</div>';
+    }
+
+    // Examples (from Google dt=ex)
+    if (result.examples && result.examples.length > 0) {
+      html += '<div class="sakura-divider"></div>';
+      html += '<div class="sakura-examples">';
+      html += '<div class="sakura-section-title">Examples</div>';
+
+      const examplesSlice = result.examples.slice(0, 3);
+      examplesSlice.forEach(ex => {
+        html += `<div class="sakura-example-item">"${escapeHtml(ex)}"</div>`;
       });
 
       html += '</div>';

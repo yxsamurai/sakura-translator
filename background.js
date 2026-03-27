@@ -166,6 +166,8 @@ async function translateWord(word, detectedLang, sourceLang, targetLang) {
     phonetic: '',
     phonetics: [],
     meanings: [],
+    definitions: [],
+    examples: [],
     lang: detectedLang,
     engine: 'google'
   };
@@ -180,22 +182,36 @@ async function translateWord(word, detectedLang, sourceLang, targetLang) {
       fetchGoogleExtended(word, direction.from, direction.to)
     ]);
 
+    // Free Dictionary: use ONLY for phonetics and audio (English pronunciation resources)
     if (dictResult.status === 'fulfilled' && dictResult.value) {
       const dict = dictResult.value;
       result.phonetic = dict.phonetic || '';
       result.phonetics = dict.phonetics || [];
-      result.meanings = dict.meanings || [];
     }
 
+    // Google: use for translation, meanings (localized!), definitions, examples
     if (googleResult.status === 'fulfilled' && googleResult.value) {
       const g = googleResult.value;
       result.translation = g.translation || '';
       if (!result.phonetic && g.srcRomanization) {
         result.phonetic = g.srcRomanization;
       }
-      if (result.meanings.length === 0 && g.dictionary && g.dictionary.length > 0) {
+      // Prefer Google's dictionary data (localized in target language)
+      if (g.dictionary && g.dictionary.length > 0) {
         result.meanings = g.dictionary;
       }
+      // Pass through definitions and examples from Google
+      if (g.definitions && g.definitions.length > 0) {
+        result.definitions = g.definitions;
+      }
+      if (g.examples && g.examples.length > 0) {
+        result.examples = g.examples;
+      }
+    }
+
+    // Fallback: if Google had no dictionary data, use Free Dictionary meanings
+    if (result.meanings.length === 0 && dictResult.status === 'fulfilled' && dictResult.value) {
+      result.meanings = dictResult.value.meanings || [];
     }
   } else {
     // Non-English word: use Google extended translation (includes romanization + dictionary)
@@ -207,6 +223,12 @@ async function translateWord(word, detectedLang, sourceLang, targetLang) {
       }
       if (googleResult.dictionary && googleResult.dictionary.length > 0) {
         result.meanings = googleResult.dictionary;
+      }
+      if (googleResult.definitions && googleResult.definitions.length > 0) {
+        result.definitions = googleResult.definitions;
+      }
+      if (googleResult.examples && googleResult.examples.length > 0) {
+        result.examples = googleResult.examples;
       }
     }
   }
