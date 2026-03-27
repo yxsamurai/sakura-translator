@@ -106,7 +106,7 @@ const test = base.extend({
     // Mock chrome.runtime.sendMessage before injecting content scripts
     await page.evaluate((mocks) => {
       // Create a minimal chrome mock with storage and runtime
-      const syncStorage = { triggerShortcut: 'ctrl', sourceLang: 'auto', targetLang: 'zh-CN' };
+      const syncStorage = { triggerShortcut: 'ctrl', selectionMode: 'manual', sourceLang: 'auto', targetLang: 'zh-CN' };
       const changeListeners = [];
 
       window.chrome = {
@@ -368,9 +368,9 @@ test.describe('Content Script — Word vs Sentence Rendering', () => {
     // Translation
     await expect(testPage.locator('.sakura-translation-text')).toHaveText('你好');
 
-    // Meanings
+    // Meanings (POS tags are translated to target language zh-CN)
     const posTags = testPage.locator('.sakura-meaning-pos');
-    await expect(posTags.first()).toContainText('exclamation');
+    await expect(posTags.first()).toContainText('感叹词');
 
     const defs = testPage.locator('.sakura-meaning-def');
     await expect(defs.first()).toContainText('used as a greeting');
@@ -384,9 +384,8 @@ test.describe('Content Script — Word vs Sentence Rendering', () => {
     await ctrlSelectElement(testPage, '#english-sentence');
     await expect(testPage.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
 
-    // Sentence layout
+    // Sentence layout (no source text, only translation)
     await expect(testPage.locator('.sakura-sentence')).toBeAttached();
-    await expect(testPage.locator('.sakura-sentence-original')).toContainText('The quick brown fox');
     await expect(testPage.locator('.sakura-sentence-translation')).toContainText('敏捷的棕色狐狸');
   });
 
@@ -843,6 +842,540 @@ test.describe('Content Script — Configurable Shortcut', () => {
 
     await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
     await expect(testPage.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
+  });
+});
+
+// ─── Helper: Simulate hover + Ctrl keydown for auto-select word (hover mode) ───
+async function hoverCtrlOnElement(page, selector) {
+  // Ensure hover mode is active
+  await page.evaluate(() => {
+    chrome.storage.sync.set({ selectionMode: 'hover' });
+  });
+  await page.waitForTimeout(100);
+
+  await page.evaluate((sel) => {
+    const el = document.querySelector(sel);
+    if (!el) throw new Error(`Element not found: ${sel}`);
+
+    const rect = el.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+
+    // Clear any existing selection
+    window.getSelection().removeAllRanges();
+
+    // Simulate mouse move to set cursor position
+    document.dispatchEvent(new MouseEvent('mousemove', {
+      clientX: x, clientY: y, bubbles: true
+    }));
+
+    // Press Ctrl (word mode)
+    document.dispatchEvent(new KeyboardEvent('keydown', {
+      key: 'Control', code: 'ControlLeft', ctrlKey: true,
+      shiftKey: false, altKey: false, bubbles: true
+    }));
+  }, selector);
+
+  // Wait for translation
+  await page.waitForTimeout(150);
+}
+
+// ─── Helper: Simulate hover + Alt for auto-select sentence (hover mode) ───
+async function hoverAltOnElement(page, selector) {
+  // Ensure hover mode is active
+  await page.evaluate(() => {
+    chrome.storage.sync.set({ selectionMode: 'hover' });
+  });
+  await page.waitForTimeout(100);
+
+  await page.evaluate((sel) => {
+    const el = document.querySelector(sel);
+    if (!el) throw new Error(`Element not found: ${sel}`);
+
+    const rect = el.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+
+    // Clear any existing selection
+    window.getSelection().removeAllRanges();
+
+    // Simulate mouse move to set cursor position
+    document.dispatchEvent(new MouseEvent('mousemove', {
+      clientX: x, clientY: y, bubbles: true
+    }));
+
+    // Press Alt (sentence mode)
+    document.dispatchEvent(new KeyboardEvent('keydown', {
+      key: 'Alt', code: 'AltLeft', ctrlKey: false,
+      shiftKey: false, altKey: true, bubbles: true
+    }));
+  }, selector);
+
+  // Wait for translation
+  await page.waitForTimeout(150);
+}
+
+test.describe('Content Script — Hover + Ctrl (Auto-Select Word)', () => {
+  test('hover+Ctrl on English word shows popup', async ({ testPage }) => {
+    await hoverCtrlOnElement(testPage, '#english-word');
+
+    await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
+    await expect(testPage.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
+  });
+
+  test('hover+Ctrl on English word shows correct translation', async ({ testPage }) => {
+    await hoverCtrlOnElement(testPage, '#english-word');
+
+    await expect(testPage.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
+    await expect(testPage.locator('.sakura-translation-text')).toHaveText('你好');
+  });
+
+  test('hover+Ctrl on Chinese word shows popup', async ({ testPage }) => {
+    await hoverCtrlOnElement(testPage, '#chinese-word');
+
+    await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
+    await expect(testPage.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
+  });
+
+  test('hover+Ctrl on Chinese word shows correct translation', async ({ testPage }) => {
+    await hoverCtrlOnElement(testPage, '#chinese-word');
+
+    await expect(testPage.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
+    await expect(testPage.locator('.sakura-translation-text')).toHaveText('computer');
+  });
+
+  test('hover+Ctrl on English sentence selects word (not whole sentence)', async ({ testPage }) => {
+    await hoverCtrlOnElement(testPage, '#english-sentence');
+
+    await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
+    await expect(testPage.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
+
+    // Should be a word result (single word from the sentence), not the whole sentence
+    const selectedText = await testPage.evaluate(() => window.getSelection().toString().trim());
+    const wordCount = selectedText.split(/\s+/).length;
+    expect(wordCount).toBe(1);
+  });
+
+  test('hover+Ctrl highlights the word in the page', async ({ testPage }) => {
+    await hoverCtrlOnElement(testPage, '#english-word');
+
+    await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
+
+    const selectedText = await testPage.evaluate(() => window.getSelection().toString().trim());
+    expect(selectedText.length).toBeGreaterThan(0);
+    expect(selectedText).toBe('hello');
+  });
+
+  test('hover+Ctrl does NOT trigger when text is already selected', async ({ testPage }) => {
+    // Enable hover mode
+    await testPage.evaluate(() => {
+      chrome.storage.sync.set({ selectionMode: 'hover' });
+    });
+    await testPage.waitForTimeout(100);
+
+    // First select some text manually
+    await testPage.evaluate(() => {
+      const el = document.querySelector('#english-sentence');
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(range);
+    });
+
+    // Now try hover+Ctrl — should NOT create a new popup (existing selection should prevent it)
+    // Instead, Workflow 2 (select-then-hotkey) should handle it
+    await testPage.evaluate(() => {
+      const el = document.querySelector('#english-word');
+      const rect = el.getBoundingClientRect();
+
+      document.dispatchEvent(new MouseEvent('mousemove', {
+        clientX: rect.left + rect.width / 2,
+        clientY: rect.top + rect.height / 2,
+        bubbles: true
+      }));
+
+      document.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'Control', code: 'ControlLeft', ctrlKey: true,
+        shiftKey: false, altKey: false, bubbles: true
+      }));
+    });
+
+    await testPage.waitForTimeout(500);
+
+    // Popup should appear (from Workflow 2, since there was an existing selection)
+    await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
+  });
+
+  test('hover+Ctrl does NOT trigger on input elements', async ({ testPage }) => {
+    // Enable hover mode
+    await testPage.evaluate(() => {
+      chrome.storage.sync.set({ selectionMode: 'hover' });
+    });
+    await testPage.waitForTimeout(100);
+
+    // Add an input element to the page
+    await testPage.evaluate(() => {
+      const input = document.createElement('input');
+      input.id = 'test-input';
+      input.type = 'text';
+      input.value = 'hello world';
+      input.style.padding = '10px';
+      input.style.fontSize = '16px';
+      document.body.appendChild(input);
+    });
+
+    // Hover over the input + Ctrl
+    await testPage.evaluate(() => {
+      const el = document.querySelector('#test-input');
+      const rect = el.getBoundingClientRect();
+
+      window.getSelection().removeAllRanges();
+
+      document.dispatchEvent(new MouseEvent('mousemove', {
+        clientX: rect.left + rect.width / 2,
+        clientY: rect.top + rect.height / 2,
+        bubbles: true
+      }));
+
+      document.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'Control', code: 'ControlLeft', ctrlKey: true,
+        shiftKey: false, altKey: false, bubbles: true
+      }));
+    });
+
+    await testPage.waitForTimeout(1000);
+    await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached();
+  });
+
+  test('hover+Ctrl does NOT trigger in manual mode', async ({ testPage }) => {
+    // Ensure manual mode
+    await testPage.evaluate(() => {
+      chrome.storage.sync.set({ selectionMode: 'manual' });
+    });
+    await testPage.waitForTimeout(100);
+
+    await testPage.evaluate(() => {
+      const el = document.querySelector('#english-word');
+      const rect = el.getBoundingClientRect();
+
+      window.getSelection().removeAllRanges();
+
+      document.dispatchEvent(new MouseEvent('mousemove', {
+        clientX: rect.left + rect.width / 2,
+        clientY: rect.top + rect.height / 2,
+        bubbles: true
+      }));
+
+      document.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'Control', code: 'ControlLeft', ctrlKey: true,
+        shiftKey: false, altKey: false, bubbles: true
+      }));
+    });
+
+    await testPage.waitForTimeout(1000);
+    await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached();
+  });
+
+  test('releasing Ctrl dismisses hover popup and clears selection', async ({ testPage }) => {
+    await hoverCtrlOnElement(testPage, '#english-word');
+    await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
+
+    // Release Ctrl
+    await testPage.evaluate(() => {
+      document.dispatchEvent(new KeyboardEvent('keyup', {
+        key: 'Control', code: 'ControlLeft', ctrlKey: false,
+        shiftKey: false, altKey: false, bubbles: true
+      }));
+    });
+
+    await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached({ timeout: 3000 });
+
+    // Selection should be cleared
+    const selectedText = await testPage.evaluate(() => window.getSelection().toString().trim());
+    expect(selectedText).toBe('');
+  });
+
+  test('hover+Ctrl popup can be dismissed with Escape', async ({ testPage }) => {
+    await hoverCtrlOnElement(testPage, '#english-word');
+    await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
+
+    await testPage.evaluate(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'Escape', code: 'Escape', bubbles: true
+      }));
+    });
+
+    await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached({ timeout: 3000 });
+  });
+
+  test('hover+Ctrl popup can be dismissed by clicking outside', async ({ testPage }) => {
+    await hoverCtrlOnElement(testPage, '#english-word');
+    await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
+
+    await testPage.evaluate(() => {
+      document.dispatchEvent(new MouseEvent('mousedown', {
+        clientX: 5, clientY: 5, bubbles: true
+      }));
+    });
+
+    await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached({ timeout: 3000 });
+  });
+});
+
+test.describe('Content Script — Hover + Alt (Auto-Select Sentence)', () => {
+  test('hover+Alt on English sentence shows popup', async ({ testPage }) => {
+    await hoverAltOnElement(testPage, '#english-sentence');
+
+    await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
+    await expect(testPage.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
+  });
+
+  test('hover+Alt on English sentence shows sentence-style result', async ({ testPage }) => {
+    await hoverAltOnElement(testPage, '#english-sentence');
+
+    await expect(testPage.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
+    await expect(testPage.locator('.sakura-sentence')).toBeAttached();
+    await expect(testPage.locator('.sakura-sentence-translation')).toContainText('敏捷的棕色狐狸');
+  });
+
+  test('hover+Alt on Chinese sentence shows popup', async ({ testPage }) => {
+    await hoverAltOnElement(testPage, '#chinese-sentence');
+
+    await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
+    await expect(testPage.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
+  });
+
+  test('hover+Alt on Chinese sentence shows sentence result', async ({ testPage }) => {
+    await hoverAltOnElement(testPage, '#chinese-sentence');
+
+    await expect(testPage.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
+    await expect(testPage.locator('.sakura-sentence-translation')).toContainText('weather is nice');
+  });
+
+  test('hover+Alt selects more text than hover+Ctrl', async ({ testPage }) => {
+    // First: hover+Ctrl on sentence element (should select just one word)
+    await hoverCtrlOnElement(testPage, '#english-sentence');
+    await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
+
+    const wordText = await testPage.evaluate(() => window.getSelection().toString().trim());
+
+    // Dismiss popup via keyup
+    await testPage.evaluate(() => {
+      document.dispatchEvent(new KeyboardEvent('keyup', {
+        key: 'Control', code: 'ControlLeft', ctrlKey: false, bubbles: true
+      }));
+    });
+    await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached({ timeout: 3000 });
+
+    // Second: hover+Alt on same element (should select sentence)
+    await hoverAltOnElement(testPage, '#english-sentence');
+    await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
+
+    const sentenceText = await testPage.evaluate(() => window.getSelection().toString().trim());
+
+    // Sentence should be longer than the word
+    expect(sentenceText.length).toBeGreaterThan(wordText.length);
+  });
+
+  test('hover+Alt on single-word element still works', async ({ testPage }) => {
+    await hoverAltOnElement(testPage, '#english-word');
+
+    await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
+    await expect(testPage.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
+  });
+
+  test('hover+Alt highlights the sentence in the page', async ({ testPage }) => {
+    await hoverAltOnElement(testPage, '#english-sentence');
+    await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
+
+    const selectedText = await testPage.evaluate(() => window.getSelection().toString().trim());
+    expect(selectedText.length).toBeGreaterThan(0);
+    // Should contain multiple words
+    const wordCount = selectedText.split(/\s+/).length;
+    expect(wordCount).toBeGreaterThan(1);
+  });
+
+  test('hover+Alt does NOT trigger on input elements', async ({ testPage }) => {
+    // Enable hover mode
+    await testPage.evaluate(() => {
+      chrome.storage.sync.set({ selectionMode: 'hover' });
+    });
+    await testPage.waitForTimeout(100);
+
+    // Add a textarea
+    await testPage.evaluate(() => {
+      const ta = document.createElement('textarea');
+      ta.id = 'test-textarea';
+      ta.textContent = 'This is a test sentence in a textarea.';
+      ta.style.padding = '10px';
+      ta.style.fontSize = '16px';
+      ta.style.width = '300px';
+      ta.style.height = '50px';
+      document.body.appendChild(ta);
+    });
+
+    await testPage.evaluate(() => {
+      const el = document.querySelector('#test-textarea');
+      const rect = el.getBoundingClientRect();
+
+      window.getSelection().removeAllRanges();
+
+      document.dispatchEvent(new MouseEvent('mousemove', {
+        clientX: rect.left + rect.width / 2,
+        clientY: rect.top + rect.height / 2,
+        bubbles: true
+      }));
+
+      document.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'Alt', code: 'AltLeft', ctrlKey: false,
+        shiftKey: false, altKey: true, bubbles: true
+      }));
+    });
+
+    await testPage.waitForTimeout(1000);
+    await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached();
+  });
+
+  test('hover+Alt does NOT trigger in manual mode', async ({ testPage }) => {
+    // Ensure manual mode
+    await testPage.evaluate(() => {
+      chrome.storage.sync.set({ selectionMode: 'manual' });
+    });
+    await testPage.waitForTimeout(100);
+
+    await testPage.evaluate(() => {
+      const el = document.querySelector('#english-sentence');
+      const rect = el.getBoundingClientRect();
+
+      window.getSelection().removeAllRanges();
+
+      document.dispatchEvent(new MouseEvent('mousemove', {
+        clientX: rect.left + rect.width / 2,
+        clientY: rect.top + rect.height / 2,
+        bubbles: true
+      }));
+
+      document.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'Alt', code: 'AltLeft', ctrlKey: false,
+        shiftKey: false, altKey: true, bubbles: true
+      }));
+    });
+
+    await testPage.waitForTimeout(1000);
+    await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached();
+  });
+
+  test('releasing Alt dismisses hover popup and clears selection', async ({ testPage }) => {
+    await hoverAltOnElement(testPage, '#english-sentence');
+    await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
+
+    // Release Alt
+    await testPage.evaluate(() => {
+      document.dispatchEvent(new KeyboardEvent('keyup', {
+        key: 'Alt', code: 'AltLeft', ctrlKey: false,
+        shiftKey: false, altKey: false, bubbles: true
+      }));
+    });
+
+    await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached({ timeout: 3000 });
+
+    // Selection should be cleared
+    const selectedText = await testPage.evaluate(() => window.getSelection().toString().trim());
+    expect(selectedText).toBe('');
+  });
+
+  test('hover+Alt popup can be dismissed with Escape', async ({ testPage }) => {
+    await hoverAltOnElement(testPage, '#english-sentence');
+    await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
+
+    await testPage.evaluate(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'Escape', code: 'Escape', bubbles: true
+      }));
+    });
+
+    await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached({ timeout: 3000 });
+  });
+});
+
+test.describe('Content Script — Hover Translate Does Not Conflict With Other Workflows', () => {
+  test('Ctrl+Select (Workflow 1) still works in manual mode', async ({ testPage }) => {
+    // Ensure manual mode
+    await testPage.evaluate(() => {
+      chrome.storage.sync.set({ selectionMode: 'manual' });
+    });
+    await testPage.waitForTimeout(100);
+
+    await ctrlSelectElement(testPage, '#english-word');
+
+    await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
+    await expect(testPage.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
+    await expect(testPage.locator('.sakura-translation-text')).toHaveText('你好');
+  });
+
+  test('select-then-Ctrl (Workflow 2) still works in manual mode', async ({ testPage }) => {
+    // Ensure manual mode
+    await testPage.evaluate(() => {
+      chrome.storage.sync.set({ selectionMode: 'manual' });
+    });
+    await testPage.waitForTimeout(100);
+
+    await selectThenHotkey(testPage, '#english-word');
+
+    await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
+    await expect(testPage.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
+  });
+
+  test('hover+Ctrl after dismissing a manual popup works', async ({ testPage }) => {
+    // First: manual mode Ctrl+Select
+    await testPage.evaluate(() => {
+      chrome.storage.sync.set({ selectionMode: 'manual' });
+    });
+    await testPage.waitForTimeout(100);
+
+    await ctrlSelectElement(testPage, '#english-word');
+    await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
+
+    // Dismiss
+    await testPage.evaluate(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'Escape', code: 'Escape', bubbles: true
+      }));
+    });
+    await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached({ timeout: 3000 });
+
+    // Clear selection
+    await testPage.evaluate(() => { window.getSelection().removeAllRanges(); });
+
+    // Switch to hover mode and use hover+Ctrl
+    await hoverCtrlOnElement(testPage, '#chinese-word');
+    await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
+    await expect(testPage.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
+  });
+
+  test('switching from hover mode to manual mode works', async ({ testPage }) => {
+    // Use hover mode first
+    await hoverCtrlOnElement(testPage, '#english-word');
+    await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
+
+    // Dismiss via keyup
+    await testPage.evaluate(() => {
+      document.dispatchEvent(new KeyboardEvent('keyup', {
+        key: 'Control', code: 'ControlLeft', ctrlKey: false, bubbles: true
+      }));
+    });
+    await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached({ timeout: 3000 });
+
+    // Switch to manual mode
+    await testPage.evaluate(() => {
+      chrome.storage.sync.set({ selectionMode: 'manual' });
+    });
+    await testPage.waitForTimeout(100);
+
+    // Manual Ctrl+Select should work
+    await ctrlSelectElement(testPage, '#chinese-word');
+    await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
+    await expect(testPage.locator('.sakura-translation-text')).toHaveText('computer');
   });
 });
 

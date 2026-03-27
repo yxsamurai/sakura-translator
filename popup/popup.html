@@ -95,6 +95,22 @@
         </div>
       </div>
 
+      <div class="settings-section">
+        <label class="settings-label">Selection Mode</label>
+        <div class="radio-group">
+          <label class="radio-item">
+            <input type="radio" name="selectionMode" value="manual" checked />
+            <span class="radio-text">Manual Select</span>
+            <span class="radio-desc">Drag to highlight text, then use shortcut key to translate</span>
+          </label>
+          <label class="radio-item">
+            <input type="radio" name="selectionMode" value="hover" />
+            <span class="radio-text">Hover Select</span>
+            <span class="radio-desc">Hover over text + Ctrl = word, hover + Alt = sentence. Release key to dismiss.</span>
+          </label>
+        </div>
+      </div>
+
       <button id="saveSettingsBtn" class="save-btn">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor"/>
@@ -109,7 +125,7 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="currentColor"/>
       </svg>
-      <span><strong id="hintShortcut">Ctrl + Select</strong> text on any page to translate</span>
+      <span id="hintText"><strong id="hintShortcut">Ctrl + Select</strong> text on any page to translate</span>
     </div>
   </div>
 

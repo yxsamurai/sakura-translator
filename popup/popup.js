@@ -15,7 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const saveSettingsBtn = document.getElementById('saveSettingsBtn');
   const saveStatus = document.getElementById('saveStatus');
   const shortcutRadios = document.querySelectorAll('input[name="shortcut"]');
+  const selectionModeRadios = document.querySelectorAll('input[name="selectionMode"]');
   const hintShortcut = document.getElementById('hintShortcut');
+  const hintText = document.getElementById('hintText');
   const sourceLangSelect = document.getElementById('sourceLang');
   const targetLangSelect = document.getElementById('targetLang');
   const swapLangsBtn = document.getElementById('swapLangsBtn');
@@ -116,9 +118,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // ─── Selection mode radio change: auto-save + update hint ───
+  selectionModeRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      updateHintText();
+      autoSave();
+    });
+  });
+
   // ─── Save settings (manual button click) ───
   saveSettingsBtn.addEventListener('click', () => {
     const shortcut = document.querySelector('input[name="shortcut"]:checked').value;
+    const selMode = document.querySelector('input[name="selectionMode"]:checked').value;
     const sourceLang = sourceLangSelect.value;
     const targetLang = targetLangSelect.value;
 
@@ -130,6 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     chrome.storage.sync.set({
       triggerShortcut: shortcut,
+      selectionMode: selMode,
       sourceLang: sourceLang,
       targetLang: targetLang
     }, () => {
@@ -142,11 +154,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
     autoSaveTimer = setTimeout(() => {
       const shortcut = document.querySelector('input[name="shortcut"]:checked').value;
+      const selMode = document.querySelector('input[name="selectionMode"]:checked').value;
       const sourceLang = sourceLangSelect.value;
       const targetLang = targetLangSelect.value;
 
       chrome.storage.sync.set({
         triggerShortcut: shortcut,
+        selectionMode: selMode,
         sourceLang: sourceLang,
         targetLang: targetLang
       }, () => {
@@ -155,11 +169,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 600);
   }
 
-  // ─── Update hint text based on selected shortcut ───
+  // ─── Update hint text based on selected shortcut and selection mode ───
   function updateHintText() {
     const shortcut = document.querySelector('input[name="shortcut"]:checked').value;
-    if (hintShortcut) {
-      hintShortcut.textContent = SHORTCUT_LABELS[shortcut] || SHORTCUT_LABELS['ctrl'];
+    const selMode = document.querySelector('input[name="selectionMode"]:checked').value;
+
+    if (selMode === 'hover') {
+      if (hintText) {
+        hintText.innerHTML = 'Hover + <strong>Ctrl</strong> = word, Hover + <strong>Alt</strong> = sentence';
+      }
+    } else {
+      if (hintShortcut) {
+        hintShortcut.textContent = SHORTCUT_LABELS[shortcut] || SHORTCUT_LABELS['ctrl'];
+      }
+      if (hintText) {
+        hintText.innerHTML = `<strong id="hintShortcut">${SHORTCUT_LABELS[shortcut] || SHORTCUT_LABELS['ctrl']}</strong> text on any page to translate`;
+      }
     }
   }
 
@@ -167,11 +192,15 @@ document.addEventListener('DOMContentLoaded', () => {
   function loadSettings() {
     // Load both sync settings and local UI state
     chrome.storage.sync.get(
-      { triggerShortcut: 'ctrl', sourceLang: 'auto', targetLang: 'zh-CN' },
+      { triggerShortcut: 'ctrl', selectionMode: 'manual', sourceLang: 'auto', targetLang: 'zh-CN' },
       (items) => {
         // Set shortcut radio
         const shortcutRadio = document.querySelector(`input[name="shortcut"][value="${items.triggerShortcut}"]`);
         if (shortcutRadio) shortcutRadio.checked = true;
+
+        // Set selection mode radio
+        const selModeRadio = document.querySelector(`input[name="selectionMode"][value="${items.selectionMode}"]`);
+        if (selModeRadio) selModeRadio.checked = true;
 
         // Set language selects
         if (sourceLangSelect) sourceLangSelect.value = items.sourceLang;

@@ -46,6 +46,7 @@ const SUPPORTED_LANGUAGES = {
 // ─── Settings ───
 const DEFAULT_SETTINGS = {
   triggerShortcut: 'ctrl',
+  selectionMode: 'manual',
   sourceLang: 'auto',
   targetLang: 'zh-CN'
 };
