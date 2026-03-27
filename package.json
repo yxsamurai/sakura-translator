@@ -1,0 +1,19 @@
+{
+  "name": "sakura-translator",
+  "version": "1.0.0",
+  "description": "A clean, minimal Chinese-English translation Chrome extension. **Ctrl + Select** text on any webpage to instantly translate words and sentences.",
+  "main": "background.js",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:unit": "npx playwright test --project=unit",
+    "test:extension": "npx playwright test --project=extension",
+    "test:popup": "npx playwright test --project=extension popup-ui",
+    "test:content": "npx playwright test --project=extension content-script"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}

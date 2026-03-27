@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="popup.css" />
+  <title>Sakura Translator</title>
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z" fill="currentColor"/>
+        </svg>
+        <span>Sakura Translator</span>
+      </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="input-section">
+      <textarea
+        id="inputText"
+        placeholder="Type or paste text to translate..."
+        rows="3"
+        autofocus
+      ></textarea>
+      <button id="translateBtn" class="translate-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="currentColor"/>
+        </svg>
+        Translate
+      </button>
+    </div>
+
+    <!-- Result Area -->
+    <div id="resultArea" class="result-area hidden">
+      <div id="resultContent"></div>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading" class="loading hidden">
+      <div class="loading-bar"></div>
+    </div>
+
+    <!-- Settings Toggle -->
+    <div class="settings-toggle">
+      <button id="settingsBtn" class="settings-btn" title="Settings">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z" fill="currentColor"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Settings Panel (hidden by default) -->
+    <div id="settingsPanel" class="settings-panel hidden">
+      <div class="settings-section">
+        <label class="settings-label">Languages</label>
+        <div class="lang-selects">
+          <div class="lang-select-group">
+            <label class="lang-select-label" for="sourceLang">Source</label>
+            <select id="sourceLang" class="lang-select"></select>
+          </div>
+          <button id="swapLangsBtn" class="swap-btn" title="Swap languages">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z" fill="currentColor"/>
+            </svg>
+          </button>
+          <div class="lang-select-group">
+            <label class="lang-select-label" for="targetLang">Target</label>
+            <select id="targetLang" class="lang-select"></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <label class="settings-label">Trigger Shortcut</label>
+        <div class="radio-group">
+          <label class="radio-item">
+            <input type="radio" name="shortcut" value="ctrl" checked />
+            <span class="radio-text">Ctrl + Select</span>
+            <span class="radio-desc">Hold Ctrl while selecting, or select then press Ctrl</span>
+          </label>
+          <label class="radio-item">
+            <input type="radio" name="shortcut" value="ctrl+shift" />
+            <span class="radio-text">Ctrl + Shift + Select</span>
+            <span class="radio-desc">Hold Ctrl+Shift while selecting, or select then press Ctrl+Shift</span>
+          </label>
+          <label class="radio-item">
+            <input type="radio" name="shortcut" value="alt" />
+            <span class="radio-text">Alt + Select</span>
+            <span class="radio-desc">Hold Alt while selecting, or select then press Alt</span>
+          </label>
+        </div>
+      </div>
+
+      <button id="saveSettingsBtn" class="save-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor"/>
+        </svg>
+        Save Settings
+      </button>
+      <div id="saveStatus" class="save-status hidden"></div>
+    </div>
+
+    <!-- Hint -->
+    <div class="hint">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="currentColor"/>
+      </svg>
+      <span><strong id="hintShortcut">Ctrl + Select</strong> text on any page to translate</span>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
