@@ -716,35 +716,6 @@ textarea::placeholder {
   }
 }
 
-/* Save Status */
-.save-status {
-  font-size: 12px;
-  text-align: center;
-  padding: 6px 0 0;
-  animation: settings-slide-in 0.2s ease-out;
-}
-
-.save-status.hidden {
-  display: none;
-}
-
-.save-status.success {
-  color: #059669;
-}
-
-.save-status.error {
-  color: #ef4444;
-}
-
-@media (prefers-color-scheme: dark) {
-  .save-status.success {
-    color: #a6e3a1;
-  }
-  .save-status.error {
-    color: #f38ba8;
-  }
-}
-
 /* Engine Badge */
 .result-engine {
   text-align: right;

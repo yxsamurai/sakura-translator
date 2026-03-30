@@ -75,16 +75,12 @@ test.describe('Popup — Settings Panel', () => {
     await expect(saveBtn).toHaveCount(0);
   });
 
-  test('changing mode auto-saves successfully', async ({ popup }) => {
+  test('no save status element exists (silent auto-save)', async ({ popup }) => {
     await popup.locator('#settingsBtn').click();
 
-    await popup.locator('#modeTabManual').click();
-
-    // Wait for auto-save (600ms debounce + buffer)
-    await popup.waitForTimeout(1000);
-
+    // No save status indicator should exist
     const status = popup.locator('#saveStatus');
-    await expect(status).toContainText('Auto-saved');
+    await expect(status).toHaveCount(0);
   });
 });
 
@@ -361,28 +357,17 @@ test.describe('Popup — Language Settings', () => {
     await expect(popup.locator('#targetLang')).toHaveValue('en');
   });
 
-  test('language settings auto-save shows success', async ({ popup }) => {
-    await popup.locator('#settingsBtn').click();
-
-    await popup.locator('#sourceLang').selectOption('ja');
-    await popup.locator('#targetLang').selectOption('ko');
-    await popup.waitForTimeout(800); // wait for auto-save
-
-    const status = popup.locator('#saveStatus');
-    await expect(status).not.toHaveClass(/hidden/);
-    await expect(status).toContainText('Auto-saved');
-  });
-
-  test('language settings auto-save on change', async ({ popup }) => {
+  test('language settings auto-save silently on change', async ({ popup }) => {
     await popup.locator('#settingsBtn').click();
 
     await popup.locator('#sourceLang').selectOption('fr');
 
-    // Wait for auto-save (600ms debounce + buffer)
+    // Wait for silent auto-save (600ms debounce + buffer)
     await popup.waitForTimeout(1000);
 
+    // No save status indicator — saves silently
     const status = popup.locator('#saveStatus');
-    await expect(status).toContainText('Auto-saved');
+    await expect(status).toHaveCount(0);
   });
 
   test('language settings persist after reopening popup', async ({ context, extensionId }) => {
@@ -578,26 +563,26 @@ test.describe('Popup — Multi-Language Dropdown Interactions', () => {
     await popup2.close();
   });
 
-  test('auto-save triggers for target language change', async ({ popup }) => {
+  test('target language change triggers silent auto-save', async ({ popup }) => {
     await popup.locator('#settingsBtn').click();
 
     await popup.locator('#targetLang').selectOption('de');
+    await popup.waitForTimeout(1000); // wait for silent auto-save
 
-    await popup.waitForTimeout(1000);
-
+    // Verify no save status indicator exists
     const status = popup.locator('#saveStatus');
-    await expect(status).toContainText('Auto-saved');
+    await expect(status).toHaveCount(0);
   });
 
-  test('swap button triggers auto-save', async ({ popup }) => {
+  test('swap button triggers silent auto-save', async ({ popup }) => {
     await popup.locator('#settingsBtn').click();
 
     await popup.locator('#swapLangsBtn').click();
+    await popup.waitForTimeout(1000); // wait for silent auto-save
 
-    await popup.waitForTimeout(1000);
-
+    // Verify no save status indicator exists
     const status = popup.locator('#saveStatus');
-    await expect(status).toContainText('Auto-saved');
+    await expect(status).toHaveCount(0);
   });
 });
 
@@ -673,15 +658,15 @@ test.describe('Popup — Auto-Detect Source Language', () => {
     await expect(popup.locator('#sourceLang')).toHaveValue('auto');
   });
 
-  test('Auto Detect setting auto-saves successfully', async ({ popup }) => {
+  test('Auto Detect setting auto-saves silently', async ({ popup }) => {
     await popup.locator('#settingsBtn').click();
 
     await popup.locator('#sourceLang').selectOption('auto');
-    await popup.waitForTimeout(800); // wait for auto-save
+    await popup.waitForTimeout(800); // wait for silent auto-save
 
+    // No save status indicator — saves silently
     const status = popup.locator('#saveStatus');
-    await expect(status).not.toHaveClass(/hidden/);
-    await expect(status).toContainText('Auto-saved');
+    await expect(status).toHaveCount(0);
   });
 
   test('Auto Detect setting persists after reopening popup', async ({ context, extensionId }) => {
@@ -759,10 +744,11 @@ test.describe('Popup — Auto-Detect Source Language', () => {
 
     await popup.locator('#sourceLang').selectOption('auto');
 
-    await popup.waitForTimeout(1000);
+    await popup.waitForTimeout(1000); // wait for silent auto-save
 
+    // No save status indicator — saves silently
     const status = popup.locator('#saveStatus');
-    await expect(status).toContainText('Auto-saved');
+    await expect(status).toHaveCount(0);
   });
 
   test('translating with auto-detect source shows result for English', async ({ popup }) => {
@@ -876,15 +862,16 @@ test.describe('Popup — Multi-Language Translation Flow', () => {
 });
 
 test.describe('Popup — Settings Persistence', () => {
-  test('auto-saves mode selection on change', async ({ popup }) => {
+  test('auto-saves mode selection silently on change', async ({ popup }) => {
     await popup.locator('#settingsBtn').click();
 
     await popup.locator('#modeTabManual').click();
 
-    await popup.waitForTimeout(1000);
+    await popup.waitForTimeout(1000); // wait for silent auto-save
 
+    // No save status indicator — saves silently
     const status = popup.locator('#saveStatus');
-    await expect(status).toContainText('Auto-saved');
+    await expect(status).toHaveCount(0);
   });
 
   test('settings persist after reopening popup', async ({ context, extensionId }) => {

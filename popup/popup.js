@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Settings elements
   const settingsBtn = document.getElementById('settingsBtn');
   const settingsPanel = document.getElementById('settingsPanel');
-  const saveStatus = document.getElementById('saveStatus');
   const sourceLangSelect = document.getElementById('sourceLang');
   const targetLangSelect = document.getElementById('targetLang');
   const swapLangsBtn = document.getElementById('swapLangsBtn');
@@ -210,9 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
     autoSaveTimer = setTimeout(() => {
       const settings = gatherSettings();
-      chrome.storage.sync.set(settings, () => {
-        showSaveStatus('Auto-saved', 'success');
-      });
+      chrome.storage.sync.set(settings);
     }, 600);
   }
 
@@ -280,16 +277,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     sourceLangSelect.value = 'auto';
     targetLangSelect.value = 'zh-CN';
-  }
-
-  // ─── Show save status message ───
-  function showSaveStatus(message, type) {
-    saveStatus.textContent = message;
-    saveStatus.className = `save-status ${type}`;
-    saveStatus.classList.remove('hidden');
-    setTimeout(() => {
-      saveStatus.classList.add('hidden');
-    }, 2500);
   }
 
   // ─── Translate button click ───
