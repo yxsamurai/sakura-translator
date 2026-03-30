@@ -50,13 +50,13 @@ const MOCK_WORD_RESULT = {
     {
       partOfSpeech: 'exclamation',
       definitions: [
-        { definition: '你好 (问候, 致意)' }
+        { definition: '你好!' }
       ]
     },
     {
       partOfSpeech: 'noun',
       definitions: [
-        { definition: '招呼 (问候, 致意)' }
+        { definition: '招呼' }
       ]
     }
   ],
@@ -124,7 +124,7 @@ const test = base.extend({
     // Mock chrome.runtime.sendMessage before injecting content scripts
     await page.evaluate((mocks) => {
       // Create a minimal chrome mock with storage and runtime
-      const syncStorage = { triggerShortcut: 'ctrl', selectionMode: 'manual', sourceLang: 'auto', targetLang: 'zh-CN' };
+      const syncStorage = { selectionMode: 'hover', hoverWordKey: 'ctrl', hoverSentenceKey: 'alt', manualKey: 'ctrl', sourceLang: 'auto', targetLang: 'zh-CN' };
       const changeListeners = [];
 
       window.chrome = {
@@ -320,6 +320,457 @@ test.describe('Content Script — Popup Appearance', () => {
     await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
     await expect(testPage.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
   });
+
+  test('popup has 6px padding on all sides', async ({ testPage }) => {
+    await ctrlSelectElement(testPage, '#english-word');
+    await expect(testPage.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
+
+    const padding = await testPage.evaluate(() => {
+      const root = document.querySelector('#sakura-translator-root');
+      const popup = root.shadowRoot.querySelector('.sakura-popup');
+      const style = window.getComputedStyle(popup);
+      return {
+        top: style.paddingTop,
+        right: style.paddingRight,
+        bottom: style.paddingBottom,
+        left: style.paddingLeft,
+      };
+    });
+
+    expect(padding.top).toBe('6px');
+    expect(padding.right).toBe('6px');
+    expect(padding.bottom).toBe('6px');
+    expect(padding.left).toBe('6px');
+  });
+
+  test('popup has correct white background color', async ({ testPage }) => {
+    await ctrlSelectElement(testPage, '#english-word');
+    await expect(testPage.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
+
+    const bgColor = await testPage.evaluate(() => {
+      const root = document.querySelector('#sakura-translator-root');
+      const popup = root.shadowRoot.querySelector('.sakura-popup');
+      return window.getComputedStyle(popup).backgroundColor;
+    });
+
+    expect(bgColor).toBe('rgb(255, 255, 255)');
+  });
+
+  test('popup background survives host page setting div background to red', async ({ testPage }) => {
+    // Simulate a hostile host page that sets all divs to red
+    await testPage.evaluate(() => {
+      const style = document.createElement('style');
+      style.textContent = 'div { background-color: red !important; }';
+      document.head.appendChild(style);
+    });
+
+    await ctrlSelectElement(testPage, '#english-word');
+    await expect(testPage.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
+
+    const bgColor = await testPage.evaluate(() => {
+      const root = document.querySelector('#sakura-translator-root');
+      const popup = root.shadowRoot.querySelector('.sakura-popup');
+      return window.getComputedStyle(popup).backgroundColor;
+    });
+
+    expect(bgColor).toBe('rgb(255, 255, 255)');
+  });
+
+  test('shadow DOM style tag contains sakura-popup CSS rules', async ({ testPage }) => {
+    await ctrlSelectElement(testPage, '#english-word');
+    await expect(testPage.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
+
+    const styleInfo = await testPage.evaluate(() => {
+      const root = document.querySelector('#sakura-translator-root');
+      const shadow = root.shadowRoot;
+      const styleEl = shadow.querySelector('style');
+      const text = styleEl ? styleEl.textContent : '';
+      return {
+        hasStyle: !!styleEl,
+        hasPopupRule: text.includes('sakura-popup'),
+        hasBackground: text.includes('background'),
+        length: text.length,
+      };
+    });
+
+    expect(styleInfo.hasStyle).toBe(true);
+    expect(styleInfo.hasPopupRule).toBe(true);
+    expect(styleInfo.hasBackground).toBe(true);
+    expect(styleInfo.length).toBeGreaterThan(100);
+  });
+
+  test('popup background is NOT transparent when CSS fails to load', async ({ page, testServer }) => {
+    // Simulate the worst case: CSS loading fails entirely
+    // (getURL exists but fetch fails, and no stylesheets have sakura rules)
+    await page.goto(testServer.url, { waitUntil: 'load' });
+
+    // Remove existing sakura CSS from the page
+    await page.evaluate(() => {
+      const styles = document.querySelectorAll('style');
+      styles.forEach(s => {
+        if (s.textContent.includes('sakura-popup') || s.textContent.includes(':host')) {
+          s.remove();
+        }
+      });
+    });
+
+    await page.evaluate((mocks) => {
+      const syncStorage = { selectionMode: 'hover', hoverWordKey: 'ctrl', hoverSentenceKey: 'alt', manualKey: 'ctrl', sourceLang: 'auto', targetLang: 'zh-CN' };
+      const changeListeners = [];
+
+      window.chrome = {
+        runtime: {
+          sendMessage: (msg, callback) => {
+            setTimeout(() => { if (msg.action === 'translate') callback(mocks.word); }, 100);
+          },
+          lastError: null,
+          getURL: (path) => 'chrome-extension://fake-id/' + path,
+        },
+        storage: {
+          sync: {
+            get: (defaults, callback) => {
+              const result = {};
+              for (const key in defaults) result[key] = syncStorage[key] !== undefined ? syncStorage[key] : defaults[key];
+              callback(result);
+            },
+            set: (items, callback) => { if (callback) callback(); },
+          },
+          onChanged: { addListener: (fn) => { changeListeners.push(fn); } },
+        },
+      };
+    }, { word: MOCK_WORD_RESULT });
+
+    await page.addScriptTag({ content: detectorJS });
+    await page.addScriptTag({ content: translatorJS });
+    await page.addScriptTag({ content: contentJS });
+
+    await ctrlSelectElement(page, '#english-word');
+    await expect(page.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
+
+    // Check that the background is NOT transparent/empty
+    const bgColor = await page.evaluate(() => {
+      const root = document.querySelector('#sakura-translator-root');
+      const popup = root.shadowRoot.querySelector('.sakura-popup');
+      return window.getComputedStyle(popup).backgroundColor;
+    });
+
+    // This should be white, NOT transparent (rgba(0,0,0,0))
+    expect(bgColor).toBe('rgb(255, 255, 255)');
+  });
+
+  test('popup uses dark background when system prefers dark color scheme', async ({ page, testServer }) => {
+    // Emulate dark color scheme
+    await page.emulateMedia({ colorScheme: 'dark' });
+
+    await page.goto(testServer.url, { waitUntil: 'load' });
+
+    // Setup chrome mock
+    await page.evaluate((mocks) => {
+      const syncStorage = { selectionMode: 'hover', hoverWordKey: 'ctrl', hoverSentenceKey: 'alt', manualKey: 'ctrl', sourceLang: 'auto', targetLang: 'zh-CN' };
+      const changeListeners = [];
+
+      window.chrome = {
+        runtime: {
+          sendMessage: (msg, callback) => {
+            setTimeout(() => { if (msg.action === 'translate') callback(mocks.word); }, 100);
+          },
+          lastError: null,
+        },
+        storage: {
+          sync: {
+            get: (defaults, callback) => {
+              const result = {};
+              for (const key in defaults) result[key] = syncStorage[key] !== undefined ? syncStorage[key] : defaults[key];
+              callback(result);
+            },
+            set: (items, callback) => { if (callback) callback(); },
+          },
+          onChanged: { addListener: (fn) => { changeListeners.push(fn); } },
+        },
+      };
+    }, { word: MOCK_WORD_RESULT });
+
+    await page.addScriptTag({ content: detectorJS });
+    await page.addScriptTag({ content: translatorJS });
+    await page.addScriptTag({ content: contentJS });
+
+    await ctrlSelectElement(page, '#english-word');
+    await expect(page.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
+
+    const bgColor = await page.evaluate(() => {
+      const root = document.querySelector('#sakura-translator-root');
+      const popup = root.shadowRoot.querySelector('.sakura-popup');
+      return window.getComputedStyle(popup).backgroundColor;
+    });
+
+    // Dark mode background: #1e1e2e = rgb(30, 30, 46)
+    expect(bgColor).toBe('rgb(30, 30, 46)');
+  });
+
+  test('popup uses light background when system prefers light color scheme', async ({ page, testServer }) => {
+    // Emulate light color scheme explicitly
+    await page.emulateMedia({ colorScheme: 'light' });
+
+    await page.goto(testServer.url, { waitUntil: 'load' });
+
+    await page.evaluate((mocks) => {
+      const syncStorage = { selectionMode: 'hover', hoverWordKey: 'ctrl', hoverSentenceKey: 'alt', manualKey: 'ctrl', sourceLang: 'auto', targetLang: 'zh-CN' };
+      const changeListeners = [];
+
+      window.chrome = {
+        runtime: {
+          sendMessage: (msg, callback) => {
+            setTimeout(() => { if (msg.action === 'translate') callback(mocks.word); }, 100);
+          },
+          lastError: null,
+        },
+        storage: {
+          sync: {
+            get: (defaults, callback) => {
+              const result = {};
+              for (const key in defaults) result[key] = syncStorage[key] !== undefined ? syncStorage[key] : defaults[key];
+              callback(result);
+            },
+            set: (items, callback) => { if (callback) callback(); },
+          },
+          onChanged: { addListener: (fn) => { changeListeners.push(fn); } },
+        },
+      };
+    }, { word: MOCK_WORD_RESULT });
+
+    await page.addScriptTag({ content: detectorJS });
+    await page.addScriptTag({ content: translatorJS });
+    await page.addScriptTag({ content: contentJS });
+
+    await ctrlSelectElement(page, '#english-word');
+    await expect(page.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
+
+    const bgColor = await page.evaluate(() => {
+      const root = document.querySelector('#sakura-translator-root');
+      const popup = root.shadowRoot.querySelector('.sakura-popup');
+      return window.getComputedStyle(popup).backgroundColor;
+    });
+
+    expect(bgColor).toBe('rgb(255, 255, 255)');
+  });
+
+  test('popup dark mode fallback when CSS fails to load via getURL', async ({ page, testServer }) => {
+    // Simulate: real extension + dark mode + CSS link fails to load
+    await page.emulateMedia({ colorScheme: 'dark' });
+
+    await page.goto(testServer.url, { waitUntil: 'load' });
+
+    // Remove existing sakura CSS from page
+    await page.evaluate(() => {
+      const styles = document.querySelectorAll('style');
+      styles.forEach(s => {
+        if (s.textContent.includes('sakura-popup') || s.textContent.includes(':host')) {
+          s.remove();
+        }
+      });
+    });
+
+    await page.evaluate((mocks) => {
+      const syncStorage = { selectionMode: 'hover', hoverWordKey: 'ctrl', hoverSentenceKey: 'alt', manualKey: 'ctrl', sourceLang: 'auto', targetLang: 'zh-CN' };
+      const changeListeners = [];
+
+      window.chrome = {
+        runtime: {
+          sendMessage: (msg, callback) => {
+            setTimeout(() => { if (msg.action === 'translate') callback(mocks.word); }, 100);
+          },
+          lastError: null,
+          getURL: (path) => 'chrome-extension://fake-id/' + path,
+        },
+        storage: {
+          sync: {
+            get: (defaults, callback) => {
+              const result = {};
+              for (const key in defaults) result[key] = syncStorage[key] !== undefined ? syncStorage[key] : defaults[key];
+              callback(result);
+            },
+            set: (items, callback) => { if (callback) callback(); },
+          },
+          onChanged: { addListener: (fn) => { changeListeners.push(fn); } },
+        },
+      };
+    }, { word: MOCK_WORD_RESULT });
+
+    await page.addScriptTag({ content: detectorJS });
+    await page.addScriptTag({ content: translatorJS });
+    await page.addScriptTag({ content: contentJS });
+
+    await ctrlSelectElement(page, '#english-word');
+    await expect(page.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
+
+    // Wait for potential link error
+    await page.waitForTimeout(500);
+
+    const bgColor = await page.evaluate(() => {
+      const root = document.querySelector('#sakura-translator-root');
+      const popup = root.shadowRoot.querySelector('.sakura-popup');
+      return window.getComputedStyle(popup).backgroundColor;
+    });
+
+    // Even when CSS fails, fallback should respect dark mode
+    // Dark mode background: #1e1e2e = rgb(30, 30, 46)
+    expect(bgColor).toBe('rgb(30, 30, 46)');
+  });
+
+  test('popup dark mode works when CSS loaded via chrome.runtime.getURL link', async ({ page, testServer }) => {
+    // Simulate real extension + dark mode: CSS loaded via <link> inside shadow DOM
+    await page.emulateMedia({ colorScheme: 'dark' });
+
+    await page.goto(testServer.url, { waitUntil: 'load' });
+
+    // Remove existing sakura CSS from page
+    await page.evaluate(() => {
+      const styles = document.querySelectorAll('style');
+      styles.forEach(s => {
+        if (s.textContent.includes('sakura-popup') || s.textContent.includes(':host')) {
+          s.remove();
+        }
+      });
+    });
+
+    // Setup chrome mock WITH getURL that returns CSS via blob
+    await page.evaluate((mocks) => {
+      const syncStorage = { selectionMode: 'hover', hoverWordKey: 'ctrl', hoverSentenceKey: 'alt', manualKey: 'ctrl', sourceLang: 'auto', targetLang: 'zh-CN' };
+      const changeListeners = [];
+
+      const cssBlob = new Blob([mocks.cssText], { type: 'text/css' });
+      const cssBlobUrl = URL.createObjectURL(cssBlob);
+
+      window.chrome = {
+        runtime: {
+          sendMessage: (msg, callback) => {
+            setTimeout(() => { if (msg.action === 'translate') callback(mocks.word); }, 100);
+          },
+          lastError: null,
+          getURL: (path) => {
+            if (path.includes('content.css')) return cssBlobUrl;
+            return '';
+          },
+        },
+        storage: {
+          sync: {
+            get: (defaults, callback) => {
+              const result = {};
+              for (const key in defaults) result[key] = syncStorage[key] !== undefined ? syncStorage[key] : defaults[key];
+              callback(result);
+            },
+            set: (items, callback) => { if (callback) callback(); },
+          },
+          onChanged: { addListener: (fn) => { changeListeners.push(fn); } },
+        },
+      };
+    }, {
+      word: MOCK_WORD_RESULT,
+      cssText: contentCSS,
+    });
+
+    await page.addScriptTag({ content: detectorJS });
+    await page.addScriptTag({ content: translatorJS });
+    await page.addScriptTag({ content: contentJS });
+
+    await ctrlSelectElement(page, '#english-word');
+    await expect(page.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
+
+    // Wait a bit for the <link> to load and fallback to be removed
+    await page.waitForTimeout(500);
+
+    const bgColor = await page.evaluate(() => {
+      const root = document.querySelector('#sakura-translator-root');
+      const popup = root.shadowRoot.querySelector('.sakura-popup');
+      return window.getComputedStyle(popup).backgroundColor;
+    });
+
+    // Dark mode background: #1e1e2e = rgb(30, 30, 46)
+    expect(bgColor).toBe('rgb(30, 30, 46)');
+  });
+
+  test('popup background is white when CSS loaded via chrome.runtime.getURL', async ({ page, testServer }) => {
+    // This test simulates the real extension scenario:
+    // - NO CSS in <head> (the page doesn't have sakura CSS)
+    // - CSS is loaded via chrome.runtime.getURL fetch
+
+    // Create a page WITHOUT the CSS in <head>
+    await page.goto(testServer.url, { waitUntil: 'load' });
+
+    // Remove any existing sakura-related styles from the page head
+    await page.evaluate(() => {
+      const styles = document.querySelectorAll('style');
+      styles.forEach(s => {
+        if (s.textContent.includes('sakura-popup') || s.textContent.includes(':host')) {
+          s.remove();
+        }
+      });
+    });
+
+    // Setup chrome mock WITH getURL that returns the CSS text via fetch
+    await page.evaluate((mocks) => {
+      const syncStorage = { selectionMode: 'hover', hoverWordKey: 'ctrl', hoverSentenceKey: 'alt', manualKey: 'ctrl', sourceLang: 'auto', targetLang: 'zh-CN' };
+      const changeListeners = [];
+
+      // Create a blob URL containing the CSS so fetch() works
+      const cssBlob = new Blob([mocks.cssText], { type: 'text/css' });
+      const cssBlobUrl = URL.createObjectURL(cssBlob);
+
+      window.chrome = {
+        runtime: {
+          sendMessage: (msg, callback) => {
+            setTimeout(() => {
+              if (msg.action === 'translate') {
+                callback(mocks.word);
+              }
+            }, 100);
+          },
+          lastError: null,
+          getURL: (path) => {
+            // Return the blob URL for content.css
+            if (path.includes('content.css')) return cssBlobUrl;
+            return '';
+          },
+        },
+        storage: {
+          sync: {
+            get: (defaults, callback) => {
+              const result = {};
+              for (const key in defaults) {
+                result[key] = syncStorage[key] !== undefined ? syncStorage[key] : defaults[key];
+              }
+              callback(result);
+            },
+            set: (items, callback) => { if (callback) callback(); },
+          },
+          onChanged: {
+            addListener: (fn) => { changeListeners.push(fn); },
+          },
+        },
+      };
+    }, {
+      word: MOCK_WORD_RESULT,
+      cssText: contentCSS,
+    });
+
+    // Inject content scripts
+    await page.addScriptTag({ content: detectorJS });
+    await page.addScriptTag({ content: translatorJS });
+    await page.addScriptTag({ content: contentJS });
+
+    // Trigger translation
+    await ctrlSelectElement(page, '#english-word');
+    await expect(page.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
+
+    // Verify background color
+    const bgColor = await page.evaluate(() => {
+      const root = document.querySelector('#sakura-translator-root');
+      const popup = root.shadowRoot.querySelector('.sakura-popup');
+      return window.getComputedStyle(popup).backgroundColor;
+    });
+
+    expect(bgColor).toBe('rgb(255, 255, 255)');
+  });
 });
 
 test.describe('Content Script — No Popup Without Ctrl', () => {
@@ -373,7 +824,7 @@ test.describe('Content Script — Popup Dismissal', () => {
 });
 
 test.describe('Content Script — Word vs Sentence Rendering', () => {
-  test('English word shows header, phonetic, translation, meanings and definitions', async ({ testPage }) => {
+  test('English word shows header, phonetic, translation, and merged meanings+definitions', async ({ testPage }) => {
     await ctrlSelectElement(testPage, '#english-word');
     await expect(testPage.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
 
@@ -386,22 +837,21 @@ test.describe('Content Script — Word vs Sentence Rendering', () => {
     // Translation
     await expect(testPage.locator('.sakura-translation-text')).toHaveText('你好');
 
-    // Meanings (localized — POS tags are translated to target language zh-CN)
+    // Merged meanings section — POS tags translated to target language
     const posTags = testPage.locator('.sakura-meaning-pos');
     await expect(posTags.first()).toContainText('感叹词');
 
-    const defs = testPage.locator('.sakura-meaning-def');
-    await expect(defs.first()).toContainText('你好');
+    // Localized translations (from dt=bd, stripped of reverse translations)
+    const translationsList = testPage.locator('.sakura-translations-list');
+    await expect(translationsList.first()).toBeAttached();
 
-    // Definitions section (source language definitions from Google dt=md)
-    const defSection = testPage.locator('.sakura-definitions');
-    await expect(defSection).toBeAttached();
-    await expect(defSection.locator('.sakura-def-text').first()).toContainText('used as a greeting');
+    // Numbered definitions from dt=md should be merged into the same section
+    const defTexts = testPage.locator('.sakura-def-text');
+    await expect(defTexts.first()).toContainText('used as a greeting');
 
-    // Examples section (from Google dt=ex)
-    const exSection = testPage.locator('.sakura-examples');
-    await expect(exSection).toBeAttached();
-    await expect(exSection.locator('.sakura-example-item').first()).toContainText('hello there, Katie!');
+    // Definition examples shown inline
+    const examples = testPage.locator('.sakura-meaning-example');
+    await expect(examples.first()).toContainText('hello there, Katie!');
   });
 
   test('English sentence shows original + translation', async ({ testPage }) => {
@@ -757,9 +1207,9 @@ test.describe('Content Script — Auto-Detect Source Language', () => {
 
 test.describe('Content Script — Configurable Shortcut', () => {
   test('Alt+Select works when shortcut is set to alt', async ({ testPage }) => {
-    // Change shortcut setting to alt
+    // Switch to manual mode and set key to alt
     await testPage.evaluate(() => {
-      chrome.storage.sync.set({ triggerShortcut: 'alt' });
+      chrome.storage.sync.set({ selectionMode: 'manual', manualKey: 'alt' });
     });
     await testPage.waitForTimeout(100);
 
@@ -784,9 +1234,9 @@ test.describe('Content Script — Configurable Shortcut', () => {
   });
 
   test('Ctrl+Select does NOT work when shortcut is set to alt', async ({ testPage }) => {
-    // Change shortcut to alt
+    // Switch to manual mode and set key to alt
     await testPage.evaluate(() => {
-      chrome.storage.sync.set({ triggerShortcut: 'alt' });
+      chrome.storage.sync.set({ selectionMode: 'manual', manualKey: 'alt' });
     });
     await testPage.waitForTimeout(100);
 
@@ -814,9 +1264,9 @@ test.describe('Content Script — Configurable Shortcut', () => {
   });
 
   test('Ctrl+Shift+Select works when shortcut is set to ctrl+shift', async ({ testPage }) => {
-    // Change shortcut to ctrl+shift
+    // Switch to manual mode and set key to ctrl+shift
     await testPage.evaluate(() => {
-      chrome.storage.sync.set({ triggerShortcut: 'ctrl+shift' });
+      chrome.storage.sync.set({ selectionMode: 'manual', manualKey: 'ctrl+shift' });
     });
     await testPage.waitForTimeout(100);
 
@@ -840,9 +1290,9 @@ test.describe('Content Script — Configurable Shortcut', () => {
   });
 
   test('select-then-Alt works when shortcut is set to alt', async ({ testPage }) => {
-    // Change shortcut to alt
+    // Switch to manual mode and set key to alt
     await testPage.evaluate(() => {
-      chrome.storage.sync.set({ triggerShortcut: 'alt' });
+      chrome.storage.sync.set({ selectionMode: 'manual', manualKey: 'alt' });
     });
     await testPage.waitForTimeout(100);
 
@@ -1100,7 +1550,7 @@ test.describe('Content Script — Hover + Ctrl (Auto-Select Word)', () => {
     await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached();
   });
 
-  test('releasing Ctrl dismisses hover popup and clears selection', async ({ testPage }) => {
+  test('releasing Ctrl does NOT dismiss hover popup (stays open)', async ({ testPage }) => {
     await hoverCtrlOnElement(testPage, '#english-word');
     await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
 
@@ -1112,14 +1562,25 @@ test.describe('Content Script — Hover + Ctrl (Auto-Select Word)', () => {
       }));
     });
 
+    // Popup should STILL be visible after releasing key
+    await testPage.waitForTimeout(500);
+    await expect(testPage.locator('#sakura-translator-root')).toBeAttached();
+
+    // Now dismiss with Escape
+    await testPage.evaluate(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'Escape', code: 'Escape', bubbles: true
+      }));
+    });
+
     await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached({ timeout: 3000 });
 
-    // Selection should be cleared
+    // Selection should be cleared after Escape
     const selectedText = await testPage.evaluate(() => window.getSelection().toString().trim());
     expect(selectedText).toBe('');
   });
 
-  test('hover+Ctrl popup can be dismissed with Escape', async ({ testPage }) => {
+  test('hover+Ctrl popup can be dismissed with Escape and clears selection', async ({ testPage }) => {
     await hoverCtrlOnElement(testPage, '#english-word');
     await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
 
@@ -1130,9 +1591,13 @@ test.describe('Content Script — Hover + Ctrl (Auto-Select Word)', () => {
     });
 
     await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached({ timeout: 3000 });
+
+    // Selection should be cleared
+    const selectedText = await testPage.evaluate(() => window.getSelection().toString().trim());
+    expect(selectedText).toBe('');
   });
 
-  test('hover+Ctrl popup can be dismissed by clicking outside', async ({ testPage }) => {
+  test('hover+Ctrl popup can be dismissed by clicking outside and clears selection', async ({ testPage }) => {
     await hoverCtrlOnElement(testPage, '#english-word');
     await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
 
@@ -1143,6 +1608,10 @@ test.describe('Content Script — Hover + Ctrl (Auto-Select Word)', () => {
     });
 
     await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached({ timeout: 3000 });
+
+    // Selection should be cleared
+    const selectedText = await testPage.evaluate(() => window.getSelection().toString().trim());
+    expect(selectedText).toBe('');
   });
 });
 
@@ -1183,10 +1652,10 @@ test.describe('Content Script — Hover + Alt (Auto-Select Sentence)', () => {
 
     const wordText = await testPage.evaluate(() => window.getSelection().toString().trim());
 
-    // Dismiss popup via keyup
+    // Dismiss popup via Escape
     await testPage.evaluate(() => {
-      document.dispatchEvent(new KeyboardEvent('keyup', {
-        key: 'Control', code: 'ControlLeft', ctrlKey: false, bubbles: true
+      document.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'Escape', code: 'Escape', bubbles: true
       }));
     });
     await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached({ timeout: 3000 });
@@ -1289,7 +1758,7 @@ test.describe('Content Script — Hover + Alt (Auto-Select Sentence)', () => {
     await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached();
   });
 
-  test('releasing Alt dismisses hover popup and clears selection', async ({ testPage }) => {
+  test('releasing Alt does NOT dismiss hover popup (stays open)', async ({ testPage }) => {
     await hoverAltOnElement(testPage, '#english-sentence');
     await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
 
@@ -1301,14 +1770,25 @@ test.describe('Content Script — Hover + Alt (Auto-Select Sentence)', () => {
       }));
     });
 
+    // Popup should STILL be visible after releasing key
+    await testPage.waitForTimeout(500);
+    await expect(testPage.locator('#sakura-translator-root')).toBeAttached();
+
+    // Now dismiss with Escape
+    await testPage.evaluate(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'Escape', code: 'Escape', bubbles: true
+      }));
+    });
+
     await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached({ timeout: 3000 });
 
-    // Selection should be cleared
+    // Selection should be cleared after Escape
     const selectedText = await testPage.evaluate(() => window.getSelection().toString().trim());
     expect(selectedText).toBe('');
   });
 
-  test('hover+Alt popup can be dismissed with Escape', async ({ testPage }) => {
+  test('hover+Alt popup can be dismissed with Escape and clears selection', async ({ testPage }) => {
     await hoverAltOnElement(testPage, '#english-sentence');
     await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
 
@@ -1319,6 +1799,10 @@ test.describe('Content Script — Hover + Alt (Auto-Select Sentence)', () => {
     });
 
     await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached({ timeout: 3000 });
+
+    // Selection should be cleared
+    const selectedText = await testPage.evaluate(() => window.getSelection().toString().trim());
+    expect(selectedText).toBe('');
   });
 });
 
@@ -1382,10 +1866,10 @@ test.describe('Content Script — Hover Translate Does Not Conflict With Other W
     await hoverCtrlOnElement(testPage, '#english-word');
     await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
 
-    // Dismiss via keyup
+    // Dismiss via Escape
     await testPage.evaluate(() => {
-      document.dispatchEvent(new KeyboardEvent('keyup', {
-        key: 'Control', code: 'ControlLeft', ctrlKey: false, bubbles: true
+      document.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'Escape', code: 'Escape', bubbles: true
       }));
     });
     await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached({ timeout: 3000 });

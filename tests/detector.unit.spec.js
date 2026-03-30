@@ -44,6 +44,41 @@ test.describe('Detector — English Words', () => {
     expect(result.type).toBe('word');
     expect(result.text).toBe('hello');
   });
+
+  test('word with trailing comma is detected as word with clean text', () => {
+    const result = SakuraDetector.detect('programming,');
+    expect(result.type).toBe('word');
+    expect(result.lang).toBe('en');
+    expect(result.text).toBe('programming');
+  });
+
+  test('word with trailing period is detected as word with clean text', () => {
+    const result = SakuraDetector.detect('hello.');
+    expect(result.type).toBe('word');
+    expect(result.lang).toBe('en');
+    expect(result.text).toBe('hello');
+  });
+
+  test('word with leading and trailing punctuation is detected as word', () => {
+    const result = SakuraDetector.detect('(hello)');
+    expect(result.type).toBe('word');
+    expect(result.lang).toBe('en');
+    expect(result.text).toBe('hello');
+  });
+
+  test('word with trailing semicolon is detected as word', () => {
+    const result = SakuraDetector.detect('return;');
+    expect(result.type).toBe('word');
+    expect(result.lang).toBe('en');
+    expect(result.text).toBe('return');
+  });
+
+  test('word with surrounding quotes is detected as word', () => {
+    const result = SakuraDetector.detect('"world"');
+    expect(result.type).toBe('word');
+    expect(result.lang).toBe('en');
+    expect(result.text).toBe('world');
+  });
 });
 
 // ─── English Sentence Detection ───

@@ -12,24 +12,34 @@ document.addEventListener('DOMContentLoaded', () => {
   // Settings elements
   const settingsBtn = document.getElementById('settingsBtn');
   const settingsPanel = document.getElementById('settingsPanel');
-  const saveSettingsBtn = document.getElementById('saveSettingsBtn');
   const saveStatus = document.getElementById('saveStatus');
-  const shortcutRadios = document.querySelectorAll('input[name="shortcut"]');
-  const selectionModeRadios = document.querySelectorAll('input[name="selectionMode"]');
-  const hintShortcut = document.getElementById('hintShortcut');
-  const hintText = document.getElementById('hintText');
   const sourceLangSelect = document.getElementById('sourceLang');
   const targetLangSelect = document.getElementById('targetLang');
   const swapLangsBtn = document.getElementById('swapLangsBtn');
 
-  // Shortcut display names
-  const SHORTCUT_LABELS = {
-    'ctrl': 'Ctrl + Select',
-    'ctrl+shift': 'Ctrl + Shift + Select',
-    'alt': 'Alt + Select'
+  // Mode tabs
+  const modeTabHover = document.getElementById('modeTabHover');
+  const modeTabManual = document.getElementById('modeTabManual');
+  const hoverOptions = document.getElementById('hoverOptions');
+  const manualOptions = document.getElementById('manualOptions');
+
+  // Key selects
+  const hoverWordKeySelect = document.getElementById('hoverWordKey');
+  const hoverSentenceKeySelect = document.getElementById('hoverSentenceKey');
+  const manualKeySelect = document.getElementById('manualKey');
+
+  // Hint elements
+  const hintText = document.getElementById('hintText');
+
+  // Key display labels
+  const KEY_LABELS = {
+    'ctrl': 'Ctrl',
+    'alt': 'Alt',
+    'shift': 'Shift',
+    'ctrl+shift': 'Ctrl+Shift'
   };
 
-  // Supported languages (synced from background on first load)
+  // Supported languages
   const SUPPORTED_LANGUAGES = {
     'auto': 'Auto Detect',
     'en': 'English',
@@ -64,6 +74,16 @@ document.addEventListener('DOMContentLoaded', () => {
     'he': 'Hebrew'
   };
 
+  // Default settings
+  const DEFAULTS = {
+    selectionMode: 'hover',
+    hoverWordKey: 'ctrl',
+    hoverSentenceKey: 'alt',
+    manualKey: 'ctrl',
+    sourceLang: 'auto',
+    targetLang: 'zh-CN'
+  };
+
   // ─── Auto-save debounce timer ───
   let autoSaveTimer = null;
 
@@ -83,6 +103,32 @@ document.addEventListener('DOMContentLoaded', () => {
     chrome.storage.local.set({ settingsPanelOpen: isOpening });
   });
 
+  // ─── Mode tab clicks ───
+  modeTabHover.addEventListener('click', () => {
+    switchMode('hover');
+    autoSave();
+  });
+
+  modeTabManual.addEventListener('click', () => {
+    switchMode('manual');
+    autoSave();
+  });
+
+  function switchMode(mode) {
+    if (mode === 'hover') {
+      modeTabHover.classList.add('active');
+      modeTabManual.classList.remove('active');
+      hoverOptions.classList.remove('hidden');
+      manualOptions.classList.add('hidden');
+    } else {
+      modeTabManual.classList.add('active');
+      modeTabHover.classList.remove('active');
+      manualOptions.classList.remove('hidden');
+      hoverOptions.classList.add('hidden');
+    }
+    updateHintText();
+  }
+
   // ─── Language select change: auto-save ───
   sourceLangSelect.addEventListener('change', () => {
     autoSave();
@@ -92,16 +138,52 @@ document.addEventListener('DOMContentLoaded', () => {
     autoSave();
   });
 
+  // ─── Key select changes: auto-save with conflict prevention ───
+  hoverWordKeySelect.addEventListener('change', () => {
+    resolveHoverKeyConflict('word');
+    updateHintText();
+    autoSave();
+  });
+
+  hoverSentenceKeySelect.addEventListener('change', () => {
+    resolveHoverKeyConflict('sentence');
+    updateHintText();
+    autoSave();
+  });
+
+  /**
+   * Resolve hover key conflicts: word and sentence keys must be different.
+   * When user changes one key to match the other, swap the other to a free key.
+   * @param {'word'|'sentence'} changed - which select was just changed
+   */
+  function resolveHoverKeyConflict(changed) {
+    const wordVal = hoverWordKeySelect.value;
+    const sentVal = hoverSentenceKeySelect.value;
+
+    if (wordVal !== sentVal) return; // no conflict
+
+    const allKeys = ['ctrl', 'alt', 'shift'];
+    const freeKey = allKeys.find(k => k !== wordVal) || 'ctrl';
+
+    if (changed === 'word') {
+      hoverSentenceKeySelect.value = freeKey;
+    } else {
+      hoverWordKeySelect.value = freeKey;
+    }
+  }
+
+  manualKeySelect.addEventListener('change', () => {
+    updateHintText();
+    autoSave();
+  });
+
   // ─── Swap languages button ───
   swapLangsBtn.addEventListener('click', () => {
     const src = sourceLangSelect.value;
     const tgt = targetLangSelect.value;
 
-    // If source is 'auto', swap means: set source to current target, set target to 'en' (sensible default)
-    // If source is a real language, normal swap
     if (src === 'auto') {
       sourceLangSelect.value = tgt;
-      // Pick a sensible default target: if target was Chinese, go to English, otherwise go to Chinese
       targetLangSelect.value = tgt.startsWith('zh') ? 'en' : 'zh-CN';
     } else {
       sourceLangSelect.value = tgt;
@@ -110,106 +192,66 @@ document.addEventListener('DOMContentLoaded', () => {
     autoSave();
   });
 
-  // ─── Shortcut radio change: auto-save + update hint ───
-  shortcutRadios.forEach(radio => {
-    radio.addEventListener('change', () => {
-      updateHintText();
-      autoSave();
-    });
-  });
-
-  // ─── Selection mode radio change: auto-save + update hint ───
-  selectionModeRadios.forEach(radio => {
-    radio.addEventListener('change', () => {
-      updateHintText();
-      autoSave();
-    });
-  });
-
-  // ─── Save settings (manual button click) ───
-  saveSettingsBtn.addEventListener('click', () => {
-    const shortcut = document.querySelector('input[name="shortcut"]:checked').value;
-    const selMode = document.querySelector('input[name="selectionMode"]:checked').value;
-    const sourceLang = sourceLangSelect.value;
-    const targetLang = targetLangSelect.value;
-
-    // Clear any pending auto-save
-    if (autoSaveTimer) {
-      clearTimeout(autoSaveTimer);
-      autoSaveTimer = null;
-    }
-
-    chrome.storage.sync.set({
-      triggerShortcut: shortcut,
-      selectionMode: selMode,
-      sourceLang: sourceLang,
-      targetLang: targetLang
-    }, () => {
-      showSaveStatus('Settings saved!', 'success');
-    });
-  });
+  // ─── Gather current form values ───
+  function gatherSettings() {
+    const mode = modeTabHover.classList.contains('active') ? 'hover' : 'manual';
+    return {
+      selectionMode: mode,
+      hoverWordKey: hoverWordKeySelect.value,
+      hoverSentenceKey: hoverSentenceKeySelect.value,
+      manualKey: manualKeySelect.value,
+      sourceLang: sourceLangSelect.value,
+      targetLang: targetLangSelect.value
+    };
+  }
 
   // ─── Auto-save: persist current form values after a short delay ───
   function autoSave() {
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
     autoSaveTimer = setTimeout(() => {
-      const shortcut = document.querySelector('input[name="shortcut"]:checked').value;
-      const selMode = document.querySelector('input[name="selectionMode"]:checked').value;
-      const sourceLang = sourceLangSelect.value;
-      const targetLang = targetLangSelect.value;
-
-      chrome.storage.sync.set({
-        triggerShortcut: shortcut,
-        selectionMode: selMode,
-        sourceLang: sourceLang,
-        targetLang: targetLang
-      }, () => {
+      const settings = gatherSettings();
+      chrome.storage.sync.set(settings, () => {
         showSaveStatus('Auto-saved', 'success');
       });
     }, 600);
   }
 
-  // ─── Update hint text based on selected shortcut and selection mode ───
+  // ─── Update hint text based on current settings ───
   function updateHintText() {
-    const shortcut = document.querySelector('input[name="shortcut"]:checked').value;
-    const selMode = document.querySelector('input[name="selectionMode"]:checked').value;
+    const mode = modeTabHover.classList.contains('active') ? 'hover' : 'manual';
 
-    if (selMode === 'hover') {
+    if (mode === 'hover') {
+      const wordKey = KEY_LABELS[hoverWordKeySelect.value] || 'Ctrl';
+      const sentKey = KEY_LABELS[hoverSentenceKeySelect.value] || 'Alt';
       if (hintText) {
-        hintText.innerHTML = 'Hover + <strong>Ctrl</strong> = word, Hover + <strong>Alt</strong> = sentence';
+        hintText.innerHTML = `<strong>${wordKey}</strong> + hover = word, <strong>${sentKey}</strong> + hover = sentence`;
       }
     } else {
-      if (hintShortcut) {
-        hintShortcut.textContent = SHORTCUT_LABELS[shortcut] || SHORTCUT_LABELS['ctrl'];
-      }
+      const key = KEY_LABELS[manualKeySelect.value] || 'Ctrl';
       if (hintText) {
-        hintText.innerHTML = `<strong id="hintShortcut">${SHORTCUT_LABELS[shortcut] || SHORTCUT_LABELS['ctrl']}</strong> text on any page to translate`;
+        hintText.innerHTML = `<strong id="hintShortcut">${key} + Select</strong> text on any page to translate`;
       }
     }
   }
 
   // ─── Load settings from storage ───
   function loadSettings() {
-    // Load both sync settings and local UI state
-    chrome.storage.sync.get(
-      { triggerShortcut: 'ctrl', selectionMode: 'manual', sourceLang: 'auto', targetLang: 'zh-CN' },
-      (items) => {
-        // Set shortcut radio
-        const shortcutRadio = document.querySelector(`input[name="shortcut"][value="${items.triggerShortcut}"]`);
-        if (shortcutRadio) shortcutRadio.checked = true;
+    chrome.storage.sync.get(DEFAULTS, (items) => {
+      // Set selection mode
+      switchMode(items.selectionMode || 'hover');
 
-        // Set selection mode radio
-        const selModeRadio = document.querySelector(`input[name="selectionMode"][value="${items.selectionMode}"]`);
-        if (selModeRadio) selModeRadio.checked = true;
+      // Set key selects
+      if (hoverWordKeySelect) hoverWordKeySelect.value = items.hoverWordKey || 'ctrl';
+      if (hoverSentenceKeySelect) hoverSentenceKeySelect.value = items.hoverSentenceKey || 'alt';
+      if (manualKeySelect) manualKeySelect.value = items.manualKey || 'ctrl';
 
-        // Set language selects
-        if (sourceLangSelect) sourceLangSelect.value = items.sourceLang;
-        if (targetLangSelect) targetLangSelect.value = items.targetLang;
+      // Set language selects
+      if (sourceLangSelect) sourceLangSelect.value = items.sourceLang;
+      if (targetLangSelect) targetLangSelect.value = items.targetLang;
 
-        // Update hint text
-        updateHintText();
-      }
-    );
+      // Update hint text
+      updateHintText();
+    });
 
     // Restore settings panel open/close state
     chrome.storage.local.get({ settingsPanelOpen: false }, (state) => {
@@ -223,13 +265,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // ─── Populate language dropdowns ───
   function populateLanguageDropdowns() {
     for (const [code, name] of Object.entries(SUPPORTED_LANGUAGES)) {
-      // Add all options to source dropdown (including 'auto')
       const srcOption = document.createElement('option');
       srcOption.value = code;
       srcOption.textContent = name;
       sourceLangSelect.appendChild(srcOption);
 
-      // Skip 'auto' for target dropdown — must always have a concrete target
       if (code === 'auto') continue;
 
       const tgtOption = document.createElement('option');
@@ -238,7 +278,6 @@ document.addEventListener('DOMContentLoaded', () => {
       targetLangSelect.appendChild(tgtOption);
     }
 
-    // Set defaults
     sourceLangSelect.value = 'auto';
     targetLangSelect.value = 'zh-CN';
   }
@@ -270,7 +309,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const text = inputText.value.trim();
     if (!text) return;
 
-    // Show loading
     loading.classList.remove('hidden');
     resultArea.classList.add('hidden');
     translateBtn.disabled = true;
@@ -294,7 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // ─── Simple detector (inline, since we can't import content scripts) ───
+  // ─── Simple detector ───
   function detect(text) {
     const CHINESE_REGEX = /[\u4e00-\u9fff\u3400-\u4dbf]/g;
     const chineseChars = text.match(CHINESE_REGEX);
@@ -343,7 +381,6 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderResult(result) {
     let html = '';
 
-    // Engine badge
     const engineBadge = `<div class="result-engine"><span class="engine-badge engine-google">via Google</span></div>`;
 
     if (result.type === 'word') {

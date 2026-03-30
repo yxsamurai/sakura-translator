@@ -1,12 +1,12 @@
 /* ─── Sakura Translator Popup ─── */
 
-#sakura-translator-root {
+:host {
   position: fixed;
   z-index: 2147483647;
   pointer-events: none;
 }
 
-#sakura-translator-root * {
+:host * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -21,14 +21,17 @@
   max-width: 420px;
   max-height: 400px;
   overflow-y: auto;
+  overflow-x: hidden;
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
-  padding: 0;
+  padding: 6px;
   animation: sakura-fade-in 0.15s ease-out;
   color: #1f2937;
   font-size: 14px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Dark mode */
@@ -54,7 +57,7 @@
 
   .sakura-translation-text {
     color: #89b4fa !important;
-    background: #1e1e2e !important;
+    background: rgba(137, 180, 250, 0.1) !important;
   }
 
   .sakura-divider {
@@ -70,6 +73,10 @@
     color: #cdd6f4 !important;
   }
 
+  .sakura-translations-list {
+    color: #cdd6f4 !important;
+  }
+
   .sakura-meaning-example {
     color: #a6adc8 !important;
     border-left-color: #45475a !important;
@@ -77,10 +84,11 @@
 
   .sakura-section-title {
     color: #a6adc8 !important;
+    border-bottom-color: #313244 !important;
   }
 
   .sakura-def-item {
-    color: #cdd6f4 !important;
+    color: #bac2de !important;
   }
 
   .sakura-def-number {
@@ -139,12 +147,13 @@
 
 /* ─── Header ─── */
 .sakura-header {
-  padding: 12px 16px;
+  padding: 10px 14px;
   border-bottom: 1px solid #f3f4f6;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  overflow: hidden;
 }
 
 .sakura-header-left {
@@ -153,19 +162,27 @@
   gap: 10px;
   flex: 1;
   min-width: 0;
+  overflow: hidden;
 }
 
 .sakura-original {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 600;
   color: #111827;
   word-break: break-word;
+  overflow-wrap: break-word;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .sakura-phonetic {
   font-size: 13px;
   color: #6b7280;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .sakura-audio-btn {
@@ -206,7 +223,8 @@
 
 /* ─── Translation line ─── */
 .sakura-translation {
-  padding: 8px 16px;
+  padding: 8px 14px 6px;
+  overflow: hidden;
 }
 
 .sakura-translation-text {
@@ -217,22 +235,27 @@
   display: inline-block;
   padding: 2px 8px;
   border-radius: 6px;
+  max-width: 100%;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* ─── Divider ─── */
 .sakura-divider {
   height: 1px;
   background: #f3f4f6;
-  margin: 0 16px;
+  margin: 4px 14px;
 }
 
 /* ─── Meanings (Dictionary) ─── */
 .sakura-meanings {
-  padding: 8px 16px 12px;
+  padding: 6px 14px 8px;
+  overflow: hidden;
 }
 
 .sakura-meaning-group {
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  overflow: hidden;
 }
 
 .sakura-meaning-group:last-child {
@@ -252,11 +275,25 @@
   margin-bottom: 4px;
 }
 
+/* Localized translations list (from dt=bd, e.g. "教程；课程") */
+.sakura-translations-list {
+  font-size: 14px;
+  color: #1f2937;
+  font-weight: 500;
+  margin: 4px 0 2px 0;
+  padding-left: 2px;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.6;
+}
+
 .sakura-meaning-def {
   font-size: 13px;
   color: #374151;
   margin: 3px 0;
   padding-left: 2px;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .sakura-meaning-example {
@@ -265,7 +302,9 @@
   font-style: italic;
   border-left: 2px solid #e5e7eb;
   padding-left: 8px;
-  margin: 2px 0 6px 2px;
+  margin: 2px 0 8px 2px;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* ─── Section Title (for Definitions / Examples) ─── */
@@ -274,22 +313,26 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #6b7280;
+  color: #9ca3af;
   margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #f3f4f6;
 }
 
 /* ─── Definitions (dt=md) ─── */
 .sakura-definitions {
-  padding: 8px 16px 12px;
+  padding: 6px 14px 8px;
+  overflow: hidden;
 }
 
 .sakura-def-item {
   font-size: 13px;
   color: #374151;
-  margin: 3px 0;
+  margin: 4px 0;
   padding-left: 2px;
   display: flex;
   gap: 6px;
+  line-height: 1.5;
 }
 
 .sakura-def-number {
@@ -300,11 +343,15 @@
 
 .sakura-def-text {
   flex: 1;
+  min-width: 0;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* ─── Examples (dt=ex) ─── */
 .sakura-examples {
-  padding: 8px 16px 12px;
+  padding: 6px 14px 8px;
+  overflow: hidden;
 }
 
 .sakura-example-item {
@@ -315,11 +362,13 @@
   padding-left: 8px;
   margin: 4px 0 4px 2px;
   line-height: 1.6;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* ─── Sentence Mode ─── */
 .sakura-sentence {
-  padding: 14px 16px;
+  padding: 14px 14px;
 }
 
 .sakura-sentence-original {
@@ -339,7 +388,7 @@
 
 /* ─── Loading ─── */
 .sakura-loading {
-  padding: 20px 16px;
+  padding: 20px 14px;
   text-align: center;
 }
 
@@ -365,7 +414,7 @@
 
 /* ─── Error ─── */
 .sakura-error {
-  padding: 14px 16px;
+  padding: 14px 14px;
   font-size: 13px;
   color: #ef4444;
   text-align: center;
@@ -373,7 +422,7 @@
 
 /* ─── Brand ─── */
 .sakura-brand {
-  padding: 4px 16px 8px;
+  padding: 4px 14px 6px;
   text-align: right;
   font-size: 10px;
   color: #d1d5db;
@@ -381,7 +430,12 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 6px;
+  gap: 4px;
+}
+
+.sakura-brand-icon {
+  flex-shrink: 0;
+  vertical-align: middle;
 }
 
 /* ─── Engine Badge ─── */

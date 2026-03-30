@@ -27,7 +27,6 @@ test.describe('Popup — UI Layout', () => {
   test('renders hint text', async ({ popup }) => {
     const hint = popup.locator('.hint');
     await expect(hint).toBeVisible();
-    await expect(hint).toContainText('Select');
   });
 
   test('result area is hidden by default', async ({ popup }) => {
@@ -68,68 +67,243 @@ test.describe('Popup — Settings Panel', () => {
     await expect(btn).not.toHaveClass(/active/);
   });
 
-  test('save button exists and is clickable', async ({ popup }) => {
+  test('settings auto-save on any change (no save button)', async ({ popup }) => {
     await popup.locator('#settingsBtn').click();
 
+    // No save button should exist
     const saveBtn = popup.locator('#saveSettingsBtn');
-    await expect(saveBtn).toBeVisible();
-    await expect(saveBtn).toContainText('Save Settings');
+    await expect(saveBtn).toHaveCount(0);
   });
 
-  test('saving settings shows success', async ({ popup }) => {
+  test('changing mode auto-saves successfully', async ({ popup }) => {
     await popup.locator('#settingsBtn').click();
 
-    await popup.locator('#saveSettingsBtn').click();
+    await popup.locator('#modeTabManual').click();
+
+    // Wait for auto-save (600ms debounce + buffer)
+    await popup.waitForTimeout(1000);
 
     const status = popup.locator('#saveStatus');
-    await expect(status).not.toHaveClass(/hidden/);
-    await expect(status).toContainText('Settings saved!');
-    await expect(status).toHaveClass(/success/);
+    await expect(status).toContainText('Auto-saved');
   });
 });
 
-test.describe('Popup — Shortcut Settings', () => {
-  test('Ctrl + Select is selected by default', async ({ popup }) => {
+test.describe('Popup — Mode Tabs', () => {
+  test('hover mode tab is active by default', async ({ popup }) => {
     await popup.locator('#settingsBtn').click();
 
-    const ctrlRadio = popup.locator('input[name="shortcut"][value="ctrl"]');
-    await expect(ctrlRadio).toBeChecked();
+    const hoverTab = popup.locator('#modeTabHover');
+    await expect(hoverTab).toHaveClass(/active/);
   });
 
-  test('Ctrl+Shift+Select option is available', async ({ popup }) => {
+  test('manual mode tab is not active by default', async ({ popup }) => {
     await popup.locator('#settingsBtn').click();
 
-    const ctrlShiftRadio = popup.locator('input[name="shortcut"][value="ctrl+shift"]');
-    await expect(ctrlShiftRadio).toBeVisible();
-    await expect(ctrlShiftRadio).not.toBeChecked();
+    const manualTab = popup.locator('#modeTabManual');
+    await expect(manualTab).not.toHaveClass(/active/);
   });
 
-  test('Alt+Select option is available', async ({ popup }) => {
+  test('clicking manual tab switches to manual mode', async ({ popup }) => {
     await popup.locator('#settingsBtn').click();
 
-    const altRadio = popup.locator('input[name="shortcut"][value="alt"]');
-    await expect(altRadio).toBeVisible();
-    await expect(altRadio).not.toBeChecked();
+    await popup.locator('#modeTabManual').click();
+
+    await expect(popup.locator('#modeTabManual')).toHaveClass(/active/);
+    await expect(popup.locator('#modeTabHover')).not.toHaveClass(/active/);
+    await expect(popup.locator('#manualOptions')).not.toHaveClass(/hidden/);
+    await expect(popup.locator('#hoverOptions')).toHaveClass(/hidden/);
   });
 
-  test('changing shortcut updates hint text', async ({ popup }) => {
+  test('clicking hover tab switches back to hover mode', async ({ popup }) => {
     await popup.locator('#settingsBtn').click();
 
-    // Switch to Alt + Select
-    await popup.locator('input[name="shortcut"][value="alt"]').click();
+    await popup.locator('#modeTabManual').click();
+    await popup.locator('#modeTabHover').click();
 
-    const hint = popup.locator('#hintShortcut');
-    await expect(hint).toHaveText('Alt + Select');
+    await expect(popup.locator('#modeTabHover')).toHaveClass(/active/);
+    await expect(popup.locator('#modeTabManual')).not.toHaveClass(/active/);
+    await expect(popup.locator('#hoverOptions')).not.toHaveClass(/hidden/);
+    await expect(popup.locator('#manualOptions')).toHaveClass(/hidden/);
+  });
+});
+
+test.describe('Popup — Hover Mode Key Settings', () => {
+  test('hover word key defaults to Ctrl', async ({ popup }) => {
+    await popup.locator('#settingsBtn').click();
+
+    const wordKey = popup.locator('#hoverWordKey');
+    await expect(wordKey).toHaveValue('ctrl');
   });
 
-  test('saving shortcut shows success', async ({ popup }) => {
+  test('hover sentence key defaults to Alt', async ({ popup }) => {
     await popup.locator('#settingsBtn').click();
-    await popup.locator('input[name="shortcut"][value="ctrl+shift"]').click();
-    await popup.locator('#saveSettingsBtn').click();
 
-    const status = popup.locator('#saveStatus');
-    await expect(status).not.toHaveClass(/hidden/);
-    await expect(status).toContainText('Settings saved!');
+    const sentenceKey = popup.locator('#hoverSentenceKey');
+    await expect(sentenceKey).toHaveValue('alt');
+  });
+
+  test('can change hover word key to Shift', async ({ popup }) => {
+    await popup.locator('#settingsBtn').click();
+
+    await popup.locator('#hoverWordKey').selectOption('shift');
+    await expect(popup.locator('#hoverWordKey')).toHaveValue('shift');
+  });
+
+  test('can change hover sentence key to Ctrl', async ({ popup }) => {
+    await popup.locator('#settingsBtn').click();
+
+    await popup.locator('#hoverSentenceKey').selectOption('ctrl');
+    await expect(popup.locator('#hoverSentenceKey')).toHaveValue('ctrl');
+  });
+
+  test('hover options are visible when hover tab is active', async ({ popup }) => {
+    await popup.locator('#settingsBtn').click();
+
+    await expect(popup.locator('#hoverOptions')).not.toHaveClass(/hidden/);
+  });
+
+  test('hover options are hidden when manual tab is active', async ({ popup }) => {
+    await popup.locator('#settingsBtn').click();
+    await popup.locator('#modeTabManual').click();
+
+    await expect(popup.locator('#hoverOptions')).toHaveClass(/hidden/);
+  });
+
+  test('changing word key to same as sentence key auto-swaps sentence key', async ({ popup }) => {
+    await popup.locator('#settingsBtn').click();
+
+    // Default: word=ctrl, sentence=alt
+    await expect(popup.locator('#hoverWordKey')).toHaveValue('ctrl');
+    await expect(popup.locator('#hoverSentenceKey')).toHaveValue('alt');
+
+    // Change word key to alt (conflicts with sentence)
+    await popup.locator('#hoverWordKey').selectOption('alt');
+
+    // Word should be alt, sentence should auto-swap to a different key (ctrl)
+    await expect(popup.locator('#hoverWordKey')).toHaveValue('alt');
+    await expect(popup.locator('#hoverSentenceKey')).not.toHaveValue('alt');
+  });
+
+  test('changing sentence key to same as word key auto-swaps word key', async ({ popup }) => {
+    await popup.locator('#settingsBtn').click();
+
+    // Default: word=ctrl, sentence=alt
+    await expect(popup.locator('#hoverWordKey')).toHaveValue('ctrl');
+    await expect(popup.locator('#hoverSentenceKey')).toHaveValue('alt');
+
+    // Change sentence key to ctrl (conflicts with word)
+    await popup.locator('#hoverSentenceKey').selectOption('ctrl');
+
+    // Sentence should be ctrl, word should auto-swap to a different key (alt)
+    await expect(popup.locator('#hoverSentenceKey')).toHaveValue('ctrl');
+    await expect(popup.locator('#hoverWordKey')).not.toHaveValue('ctrl');
+  });
+
+  test('word and sentence keys are never the same after any change', async ({ popup }) => {
+    await popup.locator('#settingsBtn').click();
+
+    const keys = ['ctrl', 'alt', 'shift'];
+    for (const key of keys) {
+      await popup.locator('#hoverWordKey').selectOption(key);
+      const wordVal = await popup.locator('#hoverWordKey').inputValue();
+      const sentVal = await popup.locator('#hoverSentenceKey').inputValue();
+      expect(wordVal).not.toBe(sentVal);
+    }
+
+    for (const key of keys) {
+      await popup.locator('#hoverSentenceKey').selectOption(key);
+      const wordVal = await popup.locator('#hoverWordKey').inputValue();
+      const sentVal = await popup.locator('#hoverSentenceKey').inputValue();
+      expect(wordVal).not.toBe(sentVal);
+    }
+  });
+});
+
+test.describe('Popup — Manual Mode Key Settings', () => {
+  test('manual key defaults to Ctrl', async ({ popup }) => {
+    await popup.locator('#settingsBtn').click();
+    await popup.locator('#modeTabManual').click();
+
+    const manualKey = popup.locator('#manualKey');
+    await expect(manualKey).toHaveValue('ctrl');
+  });
+
+  test('can change manual key to Alt', async ({ popup }) => {
+    await popup.locator('#settingsBtn').click();
+    await popup.locator('#modeTabManual').click();
+
+    await popup.locator('#manualKey').selectOption('alt');
+    await expect(popup.locator('#manualKey')).toHaveValue('alt');
+  });
+
+  test('can change manual key to Shift', async ({ popup }) => {
+    await popup.locator('#settingsBtn').click();
+    await popup.locator('#modeTabManual').click();
+
+    await popup.locator('#manualKey').selectOption('shift');
+    await expect(popup.locator('#manualKey')).toHaveValue('shift');
+  });
+
+  test('can change manual key to Ctrl+Shift', async ({ popup }) => {
+    await popup.locator('#settingsBtn').click();
+    await popup.locator('#modeTabManual').click();
+
+    await popup.locator('#manualKey').selectOption('ctrl+shift');
+    await expect(popup.locator('#manualKey')).toHaveValue('ctrl+shift');
+  });
+
+  test('manual key has 4 options (Ctrl, Alt, Shift, Ctrl+Shift)', async ({ popup }) => {
+    await popup.locator('#settingsBtn').click();
+    await popup.locator('#modeTabManual').click();
+
+    const options = popup.locator('#manualKey option');
+    const count = await options.count();
+    expect(count).toBe(4);
+  });
+
+  test('manual options are visible when manual tab is active', async ({ popup }) => {
+    await popup.locator('#settingsBtn').click();
+    await popup.locator('#modeTabManual').click();
+
+    await expect(popup.locator('#manualOptions')).not.toHaveClass(/hidden/);
+  });
+
+  test('manual options are hidden when hover tab is active', async ({ popup }) => {
+    await popup.locator('#settingsBtn').click();
+
+    await expect(popup.locator('#manualOptions')).toHaveClass(/hidden/);
+  });
+});
+
+test.describe('Popup — Hint Text Updates', () => {
+  test('hint shows hover mode text by default', async ({ popup }) => {
+    const hint = popup.locator('.hint');
+    await expect(hint).toContainText('hover');
+  });
+
+  test('changing to manual mode updates hint text', async ({ popup }) => {
+    await popup.locator('#settingsBtn').click();
+    await popup.locator('#modeTabManual').click();
+
+    const hint = popup.locator('.hint');
+    await expect(hint).toContainText('Select');
+  });
+
+  test('changing hover word key updates hint', async ({ popup }) => {
+    await popup.locator('#settingsBtn').click();
+    await popup.locator('#hoverWordKey').selectOption('shift');
+
+    const hint = popup.locator('.hint');
+    await expect(hint).toContainText('Shift');
+  });
+
+  test('changing manual key updates hint', async ({ popup }) => {
+    await popup.locator('#settingsBtn').click();
+    await popup.locator('#modeTabManual').click();
+    await popup.locator('#manualKey').selectOption('alt');
+
+    const hint = popup.locator('.hint');
+    await expect(hint).toContainText('Alt');
   });
 });
 
@@ -187,16 +361,16 @@ test.describe('Popup — Language Settings', () => {
     await expect(popup.locator('#targetLang')).toHaveValue('en');
   });
 
-  test('saving language settings shows success', async ({ popup }) => {
+  test('language settings auto-save shows success', async ({ popup }) => {
     await popup.locator('#settingsBtn').click();
 
     await popup.locator('#sourceLang').selectOption('ja');
     await popup.locator('#targetLang').selectOption('ko');
-    await popup.locator('#saveSettingsBtn').click();
+    await popup.waitForTimeout(800); // wait for auto-save
 
     const status = popup.locator('#saveStatus');
     await expect(status).not.toHaveClass(/hidden/);
-    await expect(status).toContainText('Settings saved!');
+    await expect(status).toContainText('Auto-saved');
   });
 
   test('language settings auto-save on change', async ({ popup }) => {
@@ -220,7 +394,7 @@ test.describe('Popup — Language Settings', () => {
     await popup1.locator('#settingsBtn').click();
     await popup1.locator('#sourceLang').selectOption('ja');
     await popup1.locator('#targetLang').selectOption('ko');
-    await popup1.locator('#saveSettingsBtn').click();
+    await popup1.waitForTimeout(800); // wait for auto-save
     await popup1.waitForTimeout(500);
     await popup1.close();
 
@@ -307,7 +481,6 @@ test.describe('Popup — Multi-Language Dropdown Interactions', () => {
   test('can select all common language pairs', async ({ popup }) => {
     await popup.locator('#settingsBtn').click();
 
-    // Test several common translation pairs
     const pairs = [
       { src: 'en', tgt: 'ja' },
       { src: 'en', tgt: 'ko' },
@@ -327,17 +500,14 @@ test.describe('Popup — Multi-Language Dropdown Interactions', () => {
   test('double swap restores original languages (manual mode)', async ({ popup }) => {
     await popup.locator('#settingsBtn').click();
 
-    // Set manual source: en → zh-CN
     await popup.locator('#sourceLang').selectOption('en');
     await expect(popup.locator('#sourceLang')).toHaveValue('en');
     await expect(popup.locator('#targetLang')).toHaveValue('zh-CN');
 
-    // First swap: en ↔ zh-CN
     await popup.locator('#swapLangsBtn').click();
     await expect(popup.locator('#sourceLang')).toHaveValue('zh-CN');
     await expect(popup.locator('#targetLang')).toHaveValue('en');
 
-    // Second swap — back to original
     await popup.locator('#swapLangsBtn').click();
     await expect(popup.locator('#sourceLang')).toHaveValue('en');
     await expect(popup.locator('#targetLang')).toHaveValue('zh-CN');
@@ -346,11 +516,9 @@ test.describe('Popup — Multi-Language Dropdown Interactions', () => {
   test('swap works with non-default language pair', async ({ popup }) => {
     await popup.locator('#settingsBtn').click();
 
-    // Set to Japanese → Korean
     await popup.locator('#sourceLang').selectOption('ja');
     await popup.locator('#targetLang').selectOption('ko');
 
-    // Swap
     await popup.locator('#swapLangsBtn').click();
     await expect(popup.locator('#sourceLang')).toHaveValue('ko');
     await expect(popup.locator('#targetLang')).toHaveValue('ja');
@@ -387,7 +555,6 @@ test.describe('Popup — Multi-Language Dropdown Interactions', () => {
   });
 
   test('saving non-default language pair persists correctly', async ({ context, extensionId }) => {
-    // Open popup and set unusual language pair
     const popup1 = await context.newPage();
     await popup1.goto(`chrome-extension://${extensionId}/popup/popup.html`);
     await popup1.waitForLoadState('domcontentloaded');
@@ -395,11 +562,10 @@ test.describe('Popup — Multi-Language Dropdown Interactions', () => {
     await popup1.locator('#settingsBtn').click();
     await popup1.locator('#sourceLang').selectOption('ar');
     await popup1.locator('#targetLang').selectOption('ru');
-    await popup1.locator('#saveSettingsBtn').click();
+    await popup1.waitForTimeout(800); // wait for auto-save
     await popup1.waitForTimeout(500);
     await popup1.close();
 
-    // Reopen popup and verify
     const popup2 = await context.newPage();
     await popup2.goto(`chrome-extension://${extensionId}/popup/popup.html`);
     await popup2.waitForLoadState('domcontentloaded');
@@ -417,7 +583,6 @@ test.describe('Popup — Multi-Language Dropdown Interactions', () => {
 
     await popup.locator('#targetLang').selectOption('de');
 
-    // Wait for auto-save (600ms debounce + buffer)
     await popup.waitForTimeout(1000);
 
     const status = popup.locator('#saveStatus');
@@ -429,7 +594,6 @@ test.describe('Popup — Multi-Language Dropdown Interactions', () => {
 
     await popup.locator('#swapLangsBtn').click();
 
-    // Wait for auto-save
     await popup.waitForTimeout(1000);
 
     const status = popup.locator('#saveStatus');
@@ -469,14 +633,11 @@ test.describe('Popup — Auto-Detect Source Language', () => {
   test('swap with auto source sets source to current target', async ({ popup }) => {
     await popup.locator('#settingsBtn').click();
 
-    // Default: auto → zh-CN
     await expect(popup.locator('#sourceLang')).toHaveValue('auto');
     await expect(popup.locator('#targetLang')).toHaveValue('zh-CN');
 
-    // Swap
     await popup.locator('#swapLangsBtn').click();
 
-    // Source becomes zh-CN (the old target), target becomes en (smart default)
     await expect(popup.locator('#sourceLang')).toHaveValue('zh-CN');
     await expect(popup.locator('#targetLang')).toHaveValue('en');
   });
@@ -484,14 +645,11 @@ test.describe('Popup — Auto-Detect Source Language', () => {
   test('swap with auto source and non-Chinese target sets sensible default', async ({ popup }) => {
     await popup.locator('#settingsBtn').click();
 
-    // Set auto → ja
     await popup.locator('#sourceLang').selectOption('auto');
     await popup.locator('#targetLang').selectOption('ja');
 
-    // Swap
     await popup.locator('#swapLangsBtn').click();
 
-    // Source becomes ja, target becomes zh-CN (smart default for non-Chinese target)
     await expect(popup.locator('#sourceLang')).toHaveValue('ja');
     await expect(popup.locator('#targetLang')).toHaveValue('zh-CN');
   });
@@ -515,20 +673,18 @@ test.describe('Popup — Auto-Detect Source Language', () => {
     await expect(popup.locator('#sourceLang')).toHaveValue('auto');
   });
 
-  test('saving Auto Detect setting shows success', async ({ popup }) => {
+  test('Auto Detect setting auto-saves successfully', async ({ popup }) => {
     await popup.locator('#settingsBtn').click();
 
-    // Ensure auto is selected
     await popup.locator('#sourceLang').selectOption('auto');
-    await popup.locator('#saveSettingsBtn').click();
+    await popup.waitForTimeout(800); // wait for auto-save
 
     const status = popup.locator('#saveStatus');
     await expect(status).not.toHaveClass(/hidden/);
-    await expect(status).toContainText('Settings saved!');
+    await expect(status).toContainText('Auto-saved');
   });
 
   test('Auto Detect setting persists after reopening popup', async ({ context, extensionId }) => {
-    // Open popup — should default to auto
     const popup1 = await context.newPage();
     await popup1.goto(`chrome-extension://${extensionId}/popup/popup.html`);
     await popup1.waitForLoadState('domcontentloaded');
@@ -537,12 +693,10 @@ test.describe('Popup — Auto-Detect Source Language', () => {
     await popup1.locator('#settingsBtn').click();
     await expect(popup1.locator('#sourceLang')).toHaveValue('auto');
 
-    // Save explicitly to confirm
-    await popup1.locator('#saveSettingsBtn').click();
+    await popup1.waitForTimeout(800); // wait for auto-save
     await popup1.waitForTimeout(500);
     await popup1.close();
 
-    // Reopen and verify
     const popup2 = await context.newPage();
     await popup2.goto(`chrome-extension://${extensionId}/popup/popup.html`);
     await popup2.waitForLoadState('domcontentloaded');
@@ -555,22 +709,19 @@ test.describe('Popup — Auto-Detect Source Language', () => {
   });
 
   test('switching from auto to manual and back persists auto', async ({ context, extensionId }) => {
-    // Set to manual
     const popup1 = await context.newPage();
     await popup1.goto(`chrome-extension://${extensionId}/popup/popup.html`);
     await popup1.waitForLoadState('domcontentloaded');
 
     await popup1.locator('#settingsBtn').click();
     await popup1.locator('#sourceLang').selectOption('ko');
-    await popup1.locator('#saveSettingsBtn').click();
+    await popup1.waitForTimeout(800); // wait for auto-save
     await popup1.waitForTimeout(500);
 
-    // Close settings panel before closing popup, so next popup starts with panel closed
     await popup1.locator('#settingsBtn').click();
     await popup1.waitForTimeout(200);
     await popup1.close();
 
-    // Set back to auto
     const popup2 = await context.newPage();
     await popup2.goto(`chrome-extension://${extensionId}/popup/popup.html`);
     await popup2.waitForLoadState('domcontentloaded');
@@ -581,15 +732,13 @@ test.describe('Popup — Auto-Detect Source Language', () => {
     await expect(popup2.locator('#sourceLang')).toHaveValue('ko');
 
     await popup2.locator('#sourceLang').selectOption('auto');
-    await popup2.locator('#saveSettingsBtn').click();
+    await popup2.waitForTimeout(800); // wait for auto-save
     await popup2.waitForTimeout(500);
 
-    // Close settings panel before closing popup
     await popup2.locator('#settingsBtn').click();
     await popup2.waitForTimeout(200);
     await popup2.close();
 
-    // Verify auto persisted
     const popup3 = await context.newPage();
     await popup3.goto(`chrome-extension://${extensionId}/popup/popup.html`);
     await popup3.waitForLoadState('domcontentloaded');
@@ -605,14 +754,11 @@ test.describe('Popup — Auto-Detect Source Language', () => {
   test('auto-save triggers when changing source to auto', async ({ popup }) => {
     await popup.locator('#settingsBtn').click();
 
-    // First set to manual
     await popup.locator('#sourceLang').selectOption('de');
     await popup.waitForTimeout(1000);
 
-    // Then switch to auto
     await popup.locator('#sourceLang').selectOption('auto');
 
-    // Wait for auto-save
     await popup.waitForTimeout(1000);
 
     const status = popup.locator('#saveStatus');
@@ -620,7 +766,6 @@ test.describe('Popup — Auto-Detect Source Language', () => {
   });
 
   test('translating with auto-detect source shows result for English', async ({ popup }) => {
-    // Auto is default, just translate
     await popup.locator('#inputText').fill('hello');
     await popup.locator('#translateBtn').click();
 
@@ -648,7 +793,7 @@ test.describe('Popup — Auto-Detect Source Language', () => {
     await popup.locator('#settingsBtn').click();
     await popup.locator('#sourceLang').selectOption('auto');
     await popup.locator('#targetLang').selectOption('ja');
-    await popup.locator('#saveSettingsBtn').click();
+    await popup.waitForTimeout(800); // wait for auto-save
     await popup.waitForTimeout(500);
     await popup.locator('#settingsBtn').click();
 
@@ -690,14 +835,12 @@ test.describe('Popup — Multi-Language Translation Flow', () => {
   });
 
   test('translating after changing to ja→en still shows result', async ({ popup }) => {
-    // Change language settings first
     await popup.locator('#settingsBtn').click();
     await popup.locator('#sourceLang').selectOption('ja');
     await popup.locator('#targetLang').selectOption('en');
-    await popup.locator('#saveSettingsBtn').click();
+    await popup.waitForTimeout(800); // wait for auto-save
     await popup.waitForTimeout(500);
 
-    // Close settings and translate
     await popup.locator('#settingsBtn').click();
 
     await popup.locator('#inputText').fill('こんにちは');
@@ -715,7 +858,7 @@ test.describe('Popup — Multi-Language Translation Flow', () => {
     await popup.locator('#settingsBtn').click();
     await popup.locator('#sourceLang').selectOption('fr');
     await popup.locator('#targetLang').selectOption('de');
-    await popup.locator('#saveSettingsBtn').click();
+    await popup.waitForTimeout(800); // wait for auto-save
     await popup.waitForTimeout(500);
 
     await popup.locator('#settingsBtn').click();
@@ -733,13 +876,11 @@ test.describe('Popup — Multi-Language Translation Flow', () => {
 });
 
 test.describe('Popup — Settings Persistence', () => {
-  test('auto-saves shortcut selection on change', async ({ popup }) => {
+  test('auto-saves mode selection on change', async ({ popup }) => {
     await popup.locator('#settingsBtn').click();
 
-    // Switch to Alt + Select
-    await popup.locator('input[name="shortcut"][value="alt"]').click();
+    await popup.locator('#modeTabManual').click();
 
-    // Wait for auto-save (600ms debounce + buffer)
     await popup.waitForTimeout(1000);
 
     const status = popup.locator('#saveStatus');
@@ -747,27 +888,26 @@ test.describe('Popup — Settings Persistence', () => {
   });
 
   test('settings persist after reopening popup', async ({ context, extensionId }) => {
-    // Open popup and set shortcut to alt
     const popup1 = await context.newPage();
     await popup1.goto(`chrome-extension://${extensionId}/popup/popup.html`);
     await popup1.waitForLoadState('domcontentloaded');
 
     await popup1.locator('#settingsBtn').click();
-    await popup1.locator('input[name="shortcut"][value="alt"]').click();
-    await popup1.locator('#saveSettingsBtn').click();
+    await popup1.locator('#modeTabManual').click();
+    await popup1.locator('#manualKey').selectOption('alt');
+    await popup1.waitForTimeout(800); // wait for auto-save
     await popup1.waitForTimeout(500);
     await popup1.close();
 
-    // Reopen popup — settings should be restored
     const popup2 = await context.newPage();
     await popup2.goto(`chrome-extension://${extensionId}/popup/popup.html`);
     await popup2.waitForLoadState('domcontentloaded');
-    await popup2.waitForTimeout(300); // Wait for loadSettings async
+    await popup2.waitForTimeout(300);
 
     await popup2.locator('#settingsBtn').click();
 
-    const altRadio = popup2.locator('input[name="shortcut"][value="alt"]');
-    await expect(altRadio).toBeChecked();
+    await expect(popup2.locator('#modeTabManual')).toHaveClass(/active/);
+    await expect(popup2.locator('#manualKey')).toHaveValue('alt');
 
     await popup2.close();
   });
@@ -778,7 +918,6 @@ test.describe('Popup — Translation Flow', () => {
     const btn = popup.locator('#translateBtn');
     await btn.click();
 
-    // Loading should NOT appear
     const loading = popup.locator('#loading');
     await expect(loading).toHaveClass(/hidden/);
   });
@@ -787,14 +926,11 @@ test.describe('Popup — Translation Flow', () => {
     await popup.locator('#inputText').fill('hello');
     await popup.locator('#translateBtn').click();
 
-    // Loading should appear briefly
     const loading = popup.locator('#loading');
 
-    // Wait for result
     const resultArea = popup.locator('#resultArea');
     await expect(resultArea).not.toHaveClass(/hidden/, { timeout: 15000 });
 
-    // Result should have content
     const resultContent = popup.locator('#resultContent');
     const text = await resultContent.textContent();
     expect(text.length).toBeGreaterThan(0);
@@ -824,14 +960,11 @@ test.describe('Popup — Translation Flow', () => {
     await popup.locator('#inputText').fill('computer');
     await popup.locator('#translateBtn').click();
 
-    // Button should be disabled briefly during fetch
     const btn = popup.locator('#translateBtn');
 
-    // Wait for result to confirm cycle completed
     const resultArea = popup.locator('#resultArea');
     await expect(resultArea).not.toHaveClass(/hidden/, { timeout: 15000 });
 
-    // After translation, button should be re-enabled
     await expect(btn).not.toBeDisabled();
   });
 });

@@ -45,8 +45,10 @@ const SUPPORTED_LANGUAGES = {
 
 // ─── Settings ───
 const DEFAULT_SETTINGS = {
-  triggerShortcut: 'ctrl',
-  selectionMode: 'manual',
+  selectionMode: 'hover',
+  hoverWordKey: 'ctrl',
+  hoverSentenceKey: 'alt',
+  manualKey: 'ctrl',
   sourceLang: 'auto',
   targetLang: 'zh-CN'
 };
@@ -330,11 +332,15 @@ function parseGoogleExtendedResponse(data) {
   if (data[0] && Array.isArray(data[0])) {
     const translationParts = [];
     for (const segment of data[0]) {
-      if (Array.isArray(segment) && segment[0] && typeof segment[0] === 'string') {
+      if (!Array.isArray(segment)) continue;
+      // Translation segments: [translatedText, originalText, ...]
+      // Use strict type check — segment[0] can be "" (empty string) which is falsy
+      // but still a valid translation part (e.g. for whitespace/punctuation segments)
+      if (typeof segment[0] === 'string') {
         translationParts.push(segment[0]);
       }
       // Romanization is in a segment like [null, null, "srcRoman", "tgtRoman"]
-      if (Array.isArray(segment) && segment[0] === null && segment.length >= 4) {
+      if (segment[0] === null && segment.length >= 4) {
         if (segment[2]) result.srcRomanization = segment[2];
         if (segment[3]) result.tgtRomanization = segment[3];
       }
@@ -354,12 +360,8 @@ function parseGoogleExtendedResponse(data) {
         for (const detail of detailedEntries) {
           if (!Array.isArray(detail)) continue;
           const word = detail[0];
-          const reverseTranslations = detail[1];
-          const score = detail[3];
           definitions.push({
-            definition: word + (Array.isArray(reverseTranslations) && reverseTranslations.length > 0
-              ? ` (${reverseTranslations.join(', ')})`
-              : ''),
+            definition: word,
           });
         }
       }
@@ -374,10 +376,11 @@ function parseGoogleExtendedResponse(data) {
   }
 
   // ─── Definitions (dt=md) — scan all indices ───
+  // md blocks look like: [[partOfSpeech, [[definition, oxfordId, example, ...], ...], baseWord, flag], ...]
+  // Note: d[0] = definition text, d[1] = Oxford dictionary ID (e.g. "m_en_gbus1084190.008"), d[2] = example sentence
   for (let i = 2; i < data.length; i++) {
     if (Array.isArray(data[i]) && data[i].length > 0 && Array.isArray(data[i][0])) {
       const block = data[i];
-      // md blocks look like: [[partOfSpeech, [[definition, example, null, ...], ...]], ...]
       for (const group of block) {
         if (!Array.isArray(group) || typeof group[0] !== 'string') continue;
         const pos = group[0];
@@ -391,7 +394,8 @@ function parseGoogleExtendedResponse(data) {
         for (const d of defs) {
           defItems.push({
             definition: d[0],
-            example: d[1] || undefined
+            // d[1] is the Oxford dictionary ID (skip it), d[2] is the example sentence
+            example: (typeof d[2] === 'string' && d[2].length > 0) ? d[2] : undefined
           });
         }
         if (defItems.length > 0) {

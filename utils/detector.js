@@ -19,7 +19,14 @@ const SakuraDetector = (() => {
     const lang = detectLanguage(trimmed);
     const type = detectType(trimmed, lang);
 
-    return { type, lang, text: trimmed };
+    // For words, return the cleaned text (stripped of surrounding punctuation)
+    // so the translation API gets "programming" instead of "programming,"
+    let cleanedText = trimmed;
+    if (type === 'word' && lang !== 'zh') {
+      cleanedText = stripSurroundingPunctuation(trimmed);
+    }
+
+    return { type, lang, text: cleanedText };
   }
 
   /**
@@ -32,6 +39,15 @@ const SakuraDetector = (() => {
     if (chineseRatio > 0.3) return 'zh';
     if (chineseRatio > 0 && chineseRatio <= 0.3) return 'mixed';
     return 'en';
+  }
+
+  /**
+   * Strip leading and trailing punctuation from text
+   * (commas, periods, colons, semicolons, quotes, brackets, etc.)
+   */
+  function stripSurroundingPunctuation(text) {
+    return text.replace(/^[^\w\u00C0-\u024F\u4e00-\u9fff\u3400-\u4dbf]+/, '')
+               .replace(/[^\w\u00C0-\u024F\u4e00-\u9fff\u3400-\u4dbf]+$/, '');
   }
 
   /**
@@ -48,9 +64,13 @@ const SakuraDetector = (() => {
     }
 
     // English: single word detection
+    // Strip surrounding punctuation so "programming," or "(hello)" → "programming" / "hello"
     const words = text.split(/\s+/).filter(w => w.length > 0);
-    if (words.length === 1 && /^[a-zA-Z'-]+$/.test(words[0])) {
-      return 'word';
+    if (words.length === 1) {
+      const cleaned = stripSurroundingPunctuation(words[0]);
+      if (cleaned.length > 0 && /^[a-zA-Z'-]+$/.test(cleaned)) {
+        return 'word';
+      }
     }
 
     return 'sentence';
@@ -63,7 +83,7 @@ const SakuraDetector = (() => {
     return /[。！？；，、,.!?;]/.test(text);
   }
 
-  return { detect, detectLanguage, detectType };
+  return { detect, detectLanguage, detectType, stripSurroundingPunctuation };
 })();
 
 if (typeof module !== 'undefined' && module.exports) {
