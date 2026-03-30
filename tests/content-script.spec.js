@@ -35,6 +35,8 @@ const TEST_HTML = `
   <p id="english-sentence" style="margin-bottom: 30px;">The quick brown fox jumps over the lazy dog</p>
   <p id="chinese-word" style="margin-bottom: 30px;">计算机</p>
   <p id="chinese-sentence" style="margin-bottom: 30px;">今天天气很好我想出去走走看看风景</p>
+  <div id="whitespace-area" style="height: 200px; margin-bottom: 30px;"></div>
+  <p id="padded-text" style="padding: 80px; margin-bottom: 30px;">spaced</p>
 </body>
 </html>
 `;
@@ -1884,6 +1886,157 @@ test.describe('Content Script — Hover Translate Does Not Conflict With Other W
     await ctrlSelectElement(testPage, '#chinese-word');
     await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
     await expect(testPage.locator('.sakura-translation-text')).toHaveText('computer');
+  });
+});
+
+test.describe('Content Script — Hover Mode Whitespace Rejection', () => {
+  test('hover+Ctrl on empty div does NOT show popup', async ({ testPage }) => {
+    // Ensure hover mode is active
+    await testPage.evaluate(() => {
+      chrome.storage.sync.set({ selectionMode: 'hover' });
+    });
+    await testPage.waitForTimeout(100);
+
+    await testPage.evaluate(() => {
+      const el = document.querySelector('#whitespace-area');
+      const rect = el.getBoundingClientRect();
+
+      window.getSelection().removeAllRanges();
+
+      // Move mouse to center of empty div
+      document.dispatchEvent(new MouseEvent('mousemove', {
+        clientX: rect.left + rect.width / 2,
+        clientY: rect.top + rect.height / 2,
+        bubbles: true
+      }));
+
+      // Press Ctrl
+      document.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'Control', code: 'ControlLeft', ctrlKey: true,
+        shiftKey: false, altKey: false, bubbles: true
+      }));
+    });
+
+    await testPage.waitForTimeout(1000);
+    await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached();
+  });
+
+  test('hover+Alt on empty div does NOT show popup', async ({ testPage }) => {
+    await testPage.evaluate(() => {
+      chrome.storage.sync.set({ selectionMode: 'hover' });
+    });
+    await testPage.waitForTimeout(100);
+
+    await testPage.evaluate(() => {
+      const el = document.querySelector('#whitespace-area');
+      const rect = el.getBoundingClientRect();
+
+      window.getSelection().removeAllRanges();
+
+      document.dispatchEvent(new MouseEvent('mousemove', {
+        clientX: rect.left + rect.width / 2,
+        clientY: rect.top + rect.height / 2,
+        bubbles: true
+      }));
+
+      document.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'Alt', code: 'AltLeft', ctrlKey: false,
+        shiftKey: false, altKey: true, bubbles: true
+      }));
+    });
+
+    await testPage.waitForTimeout(1000);
+    await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached();
+  });
+
+  test('hover+Ctrl on body background (far from text) does NOT show popup', async ({ testPage }) => {
+    await testPage.evaluate(() => {
+      chrome.storage.sync.set({ selectionMode: 'hover' });
+    });
+    await testPage.waitForTimeout(100);
+
+    await testPage.evaluate(() => {
+      window.getSelection().removeAllRanges();
+
+      // Move mouse to far bottom-right corner of the page (body area)
+      document.dispatchEvent(new MouseEvent('mousemove', {
+        clientX: window.innerWidth - 10,
+        clientY: window.innerHeight - 10,
+        bubbles: true
+      }));
+
+      document.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'Control', code: 'ControlLeft', ctrlKey: true,
+        shiftKey: false, altKey: false, bubbles: true
+      }));
+    });
+
+    await testPage.waitForTimeout(1000);
+    await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached();
+  });
+
+  test('hover+Ctrl on text padding area (far from text content) does NOT show popup', async ({ testPage }) => {
+    await testPage.evaluate(() => {
+      chrome.storage.sync.set({ selectionMode: 'hover' });
+    });
+    await testPage.waitForTimeout(100);
+
+    await testPage.evaluate(() => {
+      const el = document.querySelector('#padded-text');
+      const rect = el.getBoundingClientRect();
+
+      window.getSelection().removeAllRanges();
+
+      // Move mouse to the far right padding area (text "spaced" is near left edge)
+      document.dispatchEvent(new MouseEvent('mousemove', {
+        clientX: rect.right - 10,
+        clientY: rect.bottom - 10,
+        bubbles: true
+      }));
+
+      document.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'Control', code: 'ControlLeft', ctrlKey: true,
+        shiftKey: false, altKey: false, bubbles: true
+      }));
+    });
+
+    await testPage.waitForTimeout(1000);
+    await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached();
+  });
+
+  test('hover+Ctrl still works on actual text after whitespace rejection', async ({ testPage }) => {
+    // First: try on whitespace (should fail)
+    await testPage.evaluate(() => {
+      chrome.storage.sync.set({ selectionMode: 'hover' });
+    });
+    await testPage.waitForTimeout(100);
+
+    await testPage.evaluate(() => {
+      const el = document.querySelector('#whitespace-area');
+      const rect = el.getBoundingClientRect();
+
+      window.getSelection().removeAllRanges();
+
+      document.dispatchEvent(new MouseEvent('mousemove', {
+        clientX: rect.left + rect.width / 2,
+        clientY: rect.top + rect.height / 2,
+        bubbles: true
+      }));
+
+      document.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'Control', code: 'ControlLeft', ctrlKey: true,
+        shiftKey: false, altKey: false, bubbles: true
+      }));
+    });
+
+    await testPage.waitForTimeout(500);
+    await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached();
+
+    // Then: hover on actual text (should work)
+    await hoverCtrlOnElement(testPage, '#english-word');
+    await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
+    await expect(testPage.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
+    await expect(testPage.locator('.sakura-translation-text')).toHaveText('你好');
   });
 });
 

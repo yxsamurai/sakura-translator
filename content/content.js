@@ -257,6 +257,9 @@
     if (isEditableElement(elementUnderCursor)) return;
     if (elementUnderCursor.closest('#sakura-translator-root')) return;
 
+    // Don't trigger if hovering over the body/html root with no specific text element
+    if (elementUnderCursor === document.body || elementUnderCursor === document.documentElement) return;
+
     // Get the text node and offset at cursor position
     const caretInfo = getCaretInfoFromPoint(lastMouseX, lastMouseY);
     if (!caretInfo || !caretInfo.node || caretInfo.node.nodeType !== Node.TEXT_NODE) return;
@@ -266,6 +269,13 @@
     const fullText = textNode.textContent;
 
     if (!fullText || fullText.trim().length === 0) return;
+
+    // ─── Distance check: verify the cursor is actually near the resolved text ───
+    // caretRangeFromPoint snaps to the nearest text node even when the cursor is
+    // far away in blank space (padding, margins, gaps). We create a temporary range
+    // for the character at the caret offset and check its bounding rect distance
+    // from the mouse cursor. If > 30px away, the user is hovering whitespace.
+    if (!isCursorNearText(textNode, offset, fullText.length, lastMouseX, lastMouseY)) return;
 
     let extracted;
     if (isSentenceKey) {
@@ -328,15 +338,63 @@
     return null;
   }
 
+  // ─── Helper: Check if cursor is near the resolved text position ───
+  // Returns false if the mouse is too far from the actual character glyph,
+  // meaning the user is hovering over whitespace / padding / margin.
+  function isCursorNearText(textNode, offset, textLength, mouseX, mouseY) {
+    const MAX_DISTANCE = 30; // pixels
+
+    try {
+      const testRange = document.createRange();
+      const charStart = Math.min(offset, textLength - 1);
+      const charEnd = Math.min(charStart + 1, textLength);
+
+      if (charStart < 0 || charEnd <= charStart) return false;
+
+      testRange.setStart(textNode, charStart);
+      testRange.setEnd(textNode, charEnd);
+      const charRect = testRange.getBoundingClientRect();
+
+      // If the rect has no dimensions the character is not rendered
+      if (charRect.width === 0 && charRect.height === 0) return false;
+
+      // Calculate distance from cursor to character rect (edge-to-edge, not center-to-center)
+      const dx = mouseX < charRect.left ? charRect.left - mouseX
+               : mouseX > charRect.right ? mouseX - charRect.right
+               : 0;
+      const dy = mouseY < charRect.top ? charRect.top - mouseY
+               : mouseY > charRect.bottom ? mouseY - charRect.bottom
+               : 0;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      return distance <= MAX_DISTANCE;
+    } catch (e) {
+      // If range creation fails, allow the translation (don't block on error)
+      return true;
+    }
+  }
+
   // ─── Helper: Extract a word at the given offset in text ───
   function extractWordAtOffset(text, offset) {
     if (offset < 0 || offset > text.length) return null;
 
     // Check if the character at offset is Chinese
     const CHINESE_REGEX = /[\u4e00-\u9fff\u3400-\u4dbf]/;
-    const charAtOffset = text[offset] || text[offset - 1];
 
-    if (charAtOffset && CHINESE_REGEX.test(charAtOffset)) {
+    // First try the character at the exact offset
+    let charAtOffset = offset < text.length ? text[offset] : null;
+
+    // Only fall back to previous character if current is a single space
+    // right after a word (word boundary), not deep in whitespace
+    if (!charAtOffset || (!CHINESE_REGEX.test(charAtOffset) && /\s/.test(charAtOffset))) {
+      if (offset > 0 && text[offset - 1] && !(/\s/.test(text[offset - 1]))) {
+        charAtOffset = text[offset - 1];
+      }
+    }
+
+    if (!charAtOffset) return null;
+
+    if (CHINESE_REGEX.test(charAtOffset)) {
       // Chinese: extract contiguous Chinese characters around offset
       return extractChineseWordAtOffset(text, offset);
     }
@@ -381,10 +439,15 @@
     if (pos >= text.length) pos = text.length - 1;
     if (pos < 0) return null;
 
-    // If character at pos is not a word char, try pos-1
+    // If character at pos is not a word char, only try pos-1 if it's a
+    // single space immediately after a word character (cursor at word boundary).
+    // Do NOT fall back when deep in whitespace or on punctuation.
     if (!WORD_CHAR.test(text[pos])) {
-      pos = pos - 1;
-      if (pos < 0 || !WORD_CHAR.test(text[pos])) return null;
+      if (pos > 0 && (text[pos] === ' ' || text[pos] === '\u00A0') && WORD_CHAR.test(text[pos - 1])) {
+        pos = pos - 1;
+      } else {
+        return null;
+      }
     }
 
     // Scan left
