@@ -1,0 +1,1209 @@
+{
+  "config": {
+    "configFile": "d:\\projects\\samurai-translator\\playwright.config.js",
+    "rootDir": "d:/projects/samurai-translator/tests",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 2
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "d:/projects/samurai-translator/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "unit",
+        "name": "unit",
+        "testDir": "d:/projects/samurai-translator/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "/\\.(unit)\\.spec\\.js$/"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "d:/projects/samurai-translator/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "extension",
+        "name": "extension",
+        "testDir": "d:/projects/samurai-translator/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "/^(?!.*\\.unit\\.).*\\.spec\\.js$/"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "runAgents": "none",
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.58.2",
+    "workers": 12,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "background.unit.spec.js",
+      "file": "background.unit.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "resolveTranslationDirection",
+          "file": "background.unit.spec.js",
+          "line": 47,
+          "column": 6,
+          "specs": [
+            {
+              "title": "auto+zh target: Chinese detected → swap to en (avoid same-language)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:16.444Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d9c0cda850edac0c4409-cd039c164663a8ebd344",
+              "file": "background.unit.spec.js",
+              "line": 48,
+              "column": 3
+            },
+            {
+              "title": "auto+en target: English detected → swap to zh-CN (avoid same-language)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:16.460Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d9c0cda850edac0c4409-ab51262ef76fdd4c01a2",
+              "file": "background.unit.spec.js",
+              "line": 52,
+              "column": 3
+            },
+            {
+              "title": "auto mode: normal passthrough",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:16.471Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d9c0cda850edac0c4409-cad4790b529fb340de65",
+              "file": "background.unit.spec.js",
+              "line": 56,
+              "column": 3
+            },
+            {
+              "title": "manual en→zh-CN: Chinese detected → swap direction",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:16.480Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d9c0cda850edac0c4409-a44a7f602a10fba1f1f4",
+              "file": "background.unit.spec.js",
+              "line": 62,
+              "column": 3
+            },
+            {
+              "title": "manual en→zh-CN: English detected → direct translate",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:16.490Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d9c0cda850edac0c4409-e7df83fa2ea6cd9105c8",
+              "file": "background.unit.spec.js",
+              "line": 66,
+              "column": 3
+            },
+            {
+              "title": "manual zh-CN→en: English detected → swap direction",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 0,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:16.498Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d9c0cda850edac0c4409-643b64ea8e0a3e973db5",
+              "file": "background.unit.spec.js",
+              "line": 70,
+              "column": 3
+            },
+            {
+              "title": "manual zh-CN→en: Chinese detected → direct translate",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:16.503Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d9c0cda850edac0c4409-e3b0924f8cbed76473fb",
+              "file": "background.unit.spec.js",
+              "line": 74,
+              "column": 3
+            },
+            {
+              "title": "manual non-CJK: mixed/en/zh → auto-detect passthrough",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:16.510Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d9c0cda850edac0c4409-f462e4c2d6188122def5",
+              "file": "background.unit.spec.js",
+              "line": 78,
+              "column": 3
+            },
+            {
+              "title": "manual fr→zh-TW: Chinese detected → target is Chinese variant",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:16.516Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d9c0cda850edac0c4409-4ad4e6f13977e61ac7c1",
+              "file": "background.unit.spec.js",
+              "line": 84,
+              "column": 3
+            },
+            {
+              "title": "manual en↔ko: direction swap works both ways",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:16.522Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d9c0cda850edac0c4409-8abcf475b8a0394c782c",
+              "file": "background.unit.spec.js",
+              "line": 88,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "mapToGoogleLang",
+          "file": "background.unit.spec.js",
+          "line": 96,
+          "column": 6,
+          "specs": [
+            {
+              "title": "maps special codes: zh→zh-CN, mixed→auto, auto→auto",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:16.528Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d9c0cda850edac0c4409-0f506b7ebe541f862eb7",
+              "file": "background.unit.spec.js",
+              "line": 97,
+              "column": 3
+            },
+            {
+              "title": "passes through other language codes unchanged",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:16.534Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d9c0cda850edac0c4409-7021bff3ff659d5b72f4",
+              "file": "background.unit.spec.js",
+              "line": 103,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "parseGoogleExtendedResponse",
+          "file": "background.unit.spec.js",
+          "line": 199,
+          "column": 6,
+          "specs": [
+            {
+              "title": "extracts translation and romanization",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 0,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:16.540Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d9c0cda850edac0c4409-cc6611bd796629945a2d",
+              "file": "background.unit.spec.js",
+              "line": 200,
+              "column": 3
+            },
+            {
+              "title": "extracts target romanization (pinyin) from segment[2]",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 2,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m\"Jiàochéng\"\u001b[39m\nReceived: \u001b[31m\"\"\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m\"Jiàochéng\"\u001b[39m\nReceived: \u001b[31m\"\"\u001b[39m\n    at d:\\projects\\samurai-translator\\tests\\background.unit.spec.js:216:36",
+                        "location": {
+                          "file": "d:\\projects\\samurai-translator\\tests\\background.unit.spec.js",
+                          "column": 36,
+                          "line": 216
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 214 |\u001b[39m     \u001b[36mconst\u001b[39m result \u001b[33m=\u001b[39m parseGoogleExtendedResponse(data)\u001b[33m;\u001b[39m\n \u001b[90m 215 |\u001b[39m     expect(result\u001b[33m.\u001b[39mtranslation)\u001b[33m.\u001b[39mtoBe(\u001b[32m'教程'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 216 |\u001b[39m     expect(result\u001b[33m.\u001b[39mtgtRomanization)\u001b[33m.\u001b[39mtoBe(\u001b[32m'Jiàochéng'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 217 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 218 |\u001b[39m\n \u001b[90m 219 |\u001b[39m   test(\u001b[32m'returns null for null data'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "d:\\projects\\samurai-translator\\tests\\background.unit.spec.js",
+                            "column": 36,
+                            "line": 216
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m\"Jiàochéng\"\u001b[39m\nReceived: \u001b[31m\"\"\u001b[39m\n\n  214 |     const result = parseGoogleExtendedResponse(data);\n  215 |     expect(result.translation).toBe('教程');\n> 216 |     expect(result.tgtRomanization).toBe('Jiàochéng');\n      |                                    ^\n  217 |   });\n  218 |\n  219 |   test('returns null for null data', () => {\n    at d:\\projects\\samurai-translator\\tests\\background.unit.spec.js:216:36"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:16.546Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "d:\\projects\\samurai-translator\\tests\\background.unit.spec.js",
+                        "column": 36,
+                        "line": 216
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "d9c0cda850edac0c4409-51418325320540c57bc2",
+              "file": "background.unit.spec.js",
+              "line": 209,
+              "column": 3
+            },
+            {
+              "title": "returns null for null data",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:17.422Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d9c0cda850edac0c4409-bdbfd8e2625bbf1eb890",
+              "file": "background.unit.spec.js",
+              "line": 219,
+              "column": 3
+            },
+            {
+              "title": "does not truncate when segment[0] is empty string",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:17.441Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d9c0cda850edac0c4409-a6c231101754973172ce",
+              "file": "background.unit.spec.js",
+              "line": 223,
+              "column": 3
+            },
+            {
+              "title": "skips non-array segments",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:17.448Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d9c0cda850edac0c4409-4dd7f6d76a0ac15a76a6",
+              "file": "background.unit.spec.js",
+              "line": 232,
+              "column": 3
+            },
+            {
+              "title": "extracts definitions with examples from dt=md block",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:17.458Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d9c0cda850edac0c4409-d352c27daf17c7a5a338",
+              "file": "background.unit.spec.js",
+              "line": 242,
+              "column": 3
+            },
+            {
+              "title": "handles definitions without examples",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:17.468Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d9c0cda850edac0c4409-0c71e2ce459ab1671765",
+              "file": "background.unit.spec.js",
+              "line": 258,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "detector.unit.spec.js",
+      "file": "detector.unit.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Detector",
+          "file": "detector.unit.spec.js",
+          "line": 7,
+          "column": 6,
+          "specs": [
+            {
+              "title": "single English word → word/en",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 4,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:16.453Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1ffb649701e3f6f2dc79-cc9a0a12b0df1f4ce01f",
+              "file": "detector.unit.spec.js",
+              "line": 9,
+              "column": 3
+            },
+            {
+              "title": "English word with apostrophe → word/en",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 3,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:16.469Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1ffb649701e3f6f2dc79-6e63dba447c336783559",
+              "file": "detector.unit.spec.js",
+              "line": 15,
+              "column": 3
+            },
+            {
+              "title": "hyphenated English word → word/en",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:16.480Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1ffb649701e3f6f2dc79-54756d93794da57574c3",
+              "file": "detector.unit.spec.js",
+              "line": 19,
+              "column": 3
+            },
+            {
+              "title": "English word with punctuation is stripped",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:16.488Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1ffb649701e3f6f2dc79-0c4229ac61b30b9820b9",
+              "file": "detector.unit.spec.js",
+              "line": 23,
+              "column": 3
+            },
+            {
+              "title": "multiple English words → sentence/en",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:16.499Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1ffb649701e3f6f2dc79-64e2898a9d21d6590ab3",
+              "file": "detector.unit.spec.js",
+              "line": 29,
+              "column": 3
+            },
+            {
+              "title": "single Chinese character → word/zh",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:16.508Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1ffb649701e3f6f2dc79-f04fa78ebd6e9f20f405",
+              "file": "detector.unit.spec.js",
+              "line": 36,
+              "column": 3
+            },
+            {
+              "title": "Chinese word (≤4 chars) → word/zh",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:16.514Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1ffb649701e3f6f2dc79-565c49eb36ad5c941592",
+              "file": "detector.unit.spec.js",
+              "line": 42,
+              "column": 3
+            },
+            {
+              "title": "Chinese (≥5 chars) → sentence/zh",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 0,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:16.521Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1ffb649701e3f6f2dc79-90ea3ae2d3d5e8c87daf",
+              "file": "detector.unit.spec.js",
+              "line": 47,
+              "column": 3
+            },
+            {
+              "title": "Chinese with punctuation → sentence/zh",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:16.526Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1ffb649701e3f6f2dc79-350bcd19b85130520446",
+              "file": "detector.unit.spec.js",
+              "line": 51,
+              "column": 3
+            },
+            {
+              "title": "English with some Chinese → mixed/sentence",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:16.532Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1ffb649701e3f6f2dc79-175af3d402e10734422e",
+              "file": "detector.unit.spec.js",
+              "line": 57,
+              "column": 3
+            },
+            {
+              "title": "empty string → sentence/en",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:16.538Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1ffb649701e3f6f2dc79-fb6496eae9888fa0ab14",
+              "file": "detector.unit.spec.js",
+              "line": 64,
+              "column": 3
+            },
+            {
+              "title": "whitespace-only → sentence/en",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "unit",
+                  "projectName": "unit",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-31T03:38:16.544Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1ffb649701e3f6f2dc79-020dd84aad01ef0dbcd3",
+              "file": "detector.unit.spec.js",
+              "line": 70,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-03-31T03:38:15.552Z",
+    "duration": 1944.257,
+    "expected": 30,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

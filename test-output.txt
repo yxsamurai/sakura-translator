@@ -1,0 +1,47 @@
+
+Running 43 tests using 2 workers
+
+[1A[2K[1/43] [unit] › tests\background.unit.spec.js:56:3 › resolveTranslationDirection › auto+zh target: Chinese detected → swap to en (avoid same-language)
+[1A[2K[2/43] [unit] › tests\detector.unit.spec.js:9:3 › Detector › single English word → word/en
+[1A[2K[3/43] [unit] › tests\background.unit.spec.js:60:3 › resolveTranslationDirection › auto+en target: English detected → swap to zh-CN (avoid same-language)
+[1A[2K[4/43] [unit] › tests\detector.unit.spec.js:15:3 › Detector › English word with apostrophe → word/en
+[1A[2K[5/43] [unit] › tests\background.unit.spec.js:64:3 › resolveTranslationDirection › auto mode: normal passthrough
+[1A[2K[6/43] [unit] › tests\detector.unit.spec.js:19:3 › Detector › hyphenated English word → word/en
+[1A[2K[7/43] [unit] › tests\background.unit.spec.js:70:3 › resolveTranslationDirection › manual en→zh-CN: Chinese detected → swap direction
+[1A[2K[8/43] [unit] › tests\background.unit.spec.js:74:3 › resolveTranslationDirection › manual en→zh-CN: English detected → direct translate
+[1A[2K[9/43] [unit] › tests\detector.unit.spec.js:23:3 › Detector › English word with punctuation is stripped
+[1A[2K[10/43] [unit] › tests\background.unit.spec.js:78:3 › resolveTranslationDirection › manual zh-CN→en: English detected → swap direction
+[1A[2K[11/43] [unit] › tests\detector.unit.spec.js:29:3 › Detector › multiple English words → sentence/en
+[1A[2K[12/43] [unit] › tests\detector.unit.spec.js:36:3 › Detector › single Chinese character → word/zh
+[1A[2K[13/43] [unit] › tests\background.unit.spec.js:82:3 › resolveTranslationDirection › manual zh-CN→en: Chinese detected → direct translate
+[1A[2K[14/43] [unit] › tests\detector.unit.spec.js:42:3 › Detector › Chinese word (≤4 chars) → word/zh
+[1A[2K[15/43] [unit] › tests\background.unit.spec.js:86:3 › resolveTranslationDirection › manual non-CJK: mixed/en/zh → auto-detect passthrough
+[1A[2K[16/43] [unit] › tests\detector.unit.spec.js:47:3 › Detector › Chinese (≥5 chars) → sentence/zh
+[1A[2K[17/43] [unit] › tests\background.unit.spec.js:92:3 › resolveTranslationDirection › manual fr→zh-TW: Chinese detected → target is Chinese variant
+[1A[2K[18/43] [unit] › tests\detector.unit.spec.js:51:3 › Detector › Chinese with punctuation → sentence/zh
+[1A[2K[19/43] [unit] › tests\background.unit.spec.js:96:3 › resolveTranslationDirection › manual en↔ko: direction swap works both ways
+[1A[2K[20/43] [unit] › tests\detector.unit.spec.js:57:3 › Detector › English with some Chinese → mixed/sentence
+[1A[2K[21/43] [unit] › tests\background.unit.spec.js:102:3 › resolveTranslationDirection › auto mode: Japanese detected with zh-CN target → translate to zh-CN (not English)
+[1A[2K[22/43] [unit] › tests\detector.unit.spec.js:64:3 › Detector › Japanese hiragana word → word/ja
+[1A[2K[23/43] [unit] › tests\background.unit.spec.js:106:3 › resolveTranslationDirection › auto mode: Korean detected with zh-CN target → translate to zh-CN
+[1A[2K[24/43] [unit] › tests\detector.unit.spec.js:70:3 › Detector › Japanese katakana word → word/ja
+[1A[2K[25/43] [unit] › tests\background.unit.spec.js:110:3 › resolveTranslationDirection › manual ja→zh-CN: Japanese detected → direct translate
+[1A[2K[26/43] [unit] › tests\detector.unit.spec.js:76:3 › Detector › Japanese with kanji+kana → ja (not zh)
+[1A[2K[27/43] [unit] › tests\background.unit.spec.js:114:3 › resolveTranslationDirection › manual ja→zh-CN: Chinese detected → swap direction
+[1A[2K[28/43] [unit] › tests\detector.unit.spec.js:85:3 › Detector › Japanese sentence → sentence/ja
+[1A[2K[29/43] [unit] › tests\background.unit.spec.js:118:3 › resolveTranslationDirection › manual ko→en: Korean detected → direct translate
+[1A[2K[30/43] [unit] › tests\detector.unit.spec.js:92:3 › Detector › Korean word → word/ko
+[1A[2K[31/43] [unit] › tests\background.unit.spec.js:122:3 › resolveTranslationDirection › manual ko→en: English detected → swap direction
+[1A[2K[32/43] [unit] › tests\detector.unit.spec.js:98:3 › Detector › Korean sentence → sentence/ko
+[1A[2K[33/43] [unit] › tests\background.unit.spec.js:130:3 › mapToGoogleLang › maps special codes: zh→zh-CN, mixed→auto, auto→auto
+[1A[2K[34/43] [unit] › tests\detector.unit.spec.js:105:3 › Detector › empty string → sentence/en
+[1A[2K[35/43] [unit] › tests\background.unit.spec.js:136:3 › mapToGoogleLang › passes through other language codes unchanged
+[1A[2K[36/43] [unit] › tests\detector.unit.spec.js:111:3 › Detector › whitespace-only → sentence/en
+[1A[2K[37/43] [unit] › tests\background.unit.spec.js:233:3 › parseGoogleExtendedResponse › extracts translation and romanization
+[1A[2K[38/43] [unit] › tests\background.unit.spec.js:242:3 › parseGoogleExtendedResponse › extracts target romanization (pinyin) from segment[2]
+[1A[2K[39/43] [unit] › tests\background.unit.spec.js:252:3 › parseGoogleExtendedResponse › returns null for null data
+[1A[2K[40/43] [unit] › tests\background.unit.spec.js:256:3 › parseGoogleExtendedResponse › does not truncate when segment[0] is empty string
+[1A[2K[41/43] [unit] › tests\background.unit.spec.js:265:3 › parseGoogleExtendedResponse › skips non-array segments
+[1A[2K[42/43] [unit] › tests\background.unit.spec.js:275:3 › parseGoogleExtendedResponse › extracts definitions with examples from dt=md block
+[1A[2K[43/43] [unit] › tests\background.unit.spec.js:291:3 › parseGoogleExtendedResponse › handles definitions without examples
+[1A[2K  43 passed (1.7s)

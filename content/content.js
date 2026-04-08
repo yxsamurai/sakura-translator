@@ -7,7 +7,6 @@
 (() => {
   // ─── State ───
   let popupRoot = null;
-  let currentAudio = null;
   let selectionMode = 'hover';   // 'manual' = drag-select, 'hover' = auto-hover select
   let hoverWordKey = 'ctrl';     // key for hover word selection
   let hoverSentenceKey = 'alt';  // key for hover sentence selection
@@ -590,7 +589,15 @@
   }
 
   // ─── Dismiss on click outside / Escape ───
+  // Track whether a mousedown originated inside the popup's shadow DOM.
+  // Because the host element uses pointer-events:none, event retargeting
+  // may not report popupRoot as e.target — making the document-level
+  // mousedown handler incorrectly dismiss the popup before click fires.
+  let mousedownInsidePopup = false;
+
   function isClickInsidePopup(e) {
+    // Fast path: the shadow-DOM mousedown handler already flagged this
+    if (mousedownInsidePopup) return true;
     if (!popupRoot) return false;
     // Direct check on the host element
     if (popupRoot.contains(e.target)) return true;
@@ -609,6 +616,8 @@
         window.getSelection().removeAllRanges();
       }
     }
+    // Reset the flag after handling
+    mousedownInsidePopup = false;
   });
 
   document.addEventListener('keydown', (e) => {
@@ -718,9 +727,7 @@
     .sakura-header { padding: 10px 14px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; justify-content: space-between; gap: 8px; overflow: hidden; }
     .sakura-header-left { display: flex; align-items: baseline; gap: 10px; flex: 1; min-width: 0; overflow: hidden; }
     .sakura-original { font-size: 17px; font-weight: 600; word-break: break-word; }
-    .sakura-phonetic { font-size: 13px; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 1; min-width: 0; }
-    .sakura-audio-btn { flex-shrink: 0; width: 28px; height: 28px; border: none; background: #f3f4f6; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-    .sakura-audio-btn svg { width: 16px; height: 16px; fill: #6b7280; }
+    .sakura-phonetic { font-size: 13px; color: #6b7280; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 1; min-width: 0; }
     .sakura-translation { padding: 8px 14px 6px; }
     .sakura-translation-text { font-size: 16px; font-weight: 500; color: #2563eb; background: #eff6ff; display: inline-block; padding: 2px 8px; border-radius: 6px; }
     .sakura-divider { height: 1px; background: #f3f4f6; margin: 4px 14px; }
@@ -746,8 +753,6 @@
       .sakura-header { border-bottom-color: #313244; }
       .sakura-original { color: #cdd6f4; }
       .sakura-phonetic { color: #a6adc8; }
-      .sakura-audio-btn { background: #313244; }
-      .sakura-audio-btn svg { fill: #a6adc8; }
       .sakura-translation-text { color: #89b4fa; background: rgba(137, 180, 250, 0.1); }
       .sakura-divider { background: #313244; }
       .sakura-meaning-pos { color: #f38ba8; background: rgba(243, 139, 168, 0.1); }
@@ -781,6 +786,14 @@
     const popup = document.createElement('div');
     popup.className = 'sakura-popup';
 
+    // Flag mousedown events originating inside the popup so the
+    // document-level dismiss handler knows not to remove the popup.
+    // This is necessary because pointer-events:none on the shadow host
+    // can prevent correct event retargeting.
+    popup.addEventListener('mousedown', () => {
+      mousedownInsidePopup = true;
+    });
+
     // Position popup
     positionPopup(popup, rect);
 
@@ -807,9 +820,6 @@
 
       // Re-position after content change
       positionPopup(popup, rect);
-
-      // Bind audio buttons
-      bindAudioButtons(popup);
 
     } catch (err) {
       if (!popupRoot) return;
@@ -855,10 +865,6 @@
 
   // ─── Remove popup ───
   function removePopup() {
-    if (currentAudio) {
-      currentAudio.pause();
-      currentAudio = null;
-    }
     if (popupRoot) {
       popupRoot.remove();
       popupRoot = null;
@@ -943,21 +949,13 @@
   function renderWordResult(result) {
     let html = '';
 
-    // Header: word + phonetic + audio
-    const audioUrl = getAudioUrl(result.phonetics);
+    // Header: word + phonetic
     html += `
       <div class="sakura-header">
         <div class="sakura-header-left">
           <span class="sakura-original">${escapeHtml(result.original)}</span>
           ${result.phonetic ? `<span class="sakura-phonetic">${escapeHtml(result.phonetic)}</span>` : ''}
         </div>
-        ${audioUrl ? `
-          <button class="sakura-audio-btn" data-audio-url="${escapeHtml(audioUrl)}" title="Play pronunciation">
-            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-            </svg>
-          </button>
-        ` : ''}
       </div>
     `;
 
@@ -1043,36 +1041,6 @@
       </div>
       <div class="sakura-brand">${renderBrandIcon()} Sakura Translator ${renderEngineBadge()}</div>
     `;
-  }
-
-  // ─── Bind audio playback ───
-  function bindAudioButtons(popup) {
-    const buttons = popup.querySelectorAll('.sakura-audio-btn');
-    buttons.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const url = btn.getAttribute('data-audio-url');
-        if (url) {
-          if (currentAudio) currentAudio.pause();
-          currentAudio = new Audio(url);
-          currentAudio.play().catch(() => {});
-        }
-      });
-    });
-  }
-
-  // ─── Get best audio URL from phonetics ───
-  function getAudioUrl(phonetics) {
-    if (!phonetics || !Array.isArray(phonetics)) return null;
-    for (const p of phonetics) {
-      if (p.audio) {
-        // Ensure URL is absolute
-        let url = p.audio;
-        if (url.startsWith('//')) url = 'https:' + url;
-        return url;
-      }
-    }
-    return null;
   }
 
   // ─── HTML escape ───

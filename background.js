@@ -113,7 +113,8 @@ function resolveTranslationDirection(detectedLang, sourceLang, targetLang) {
   if (sourceLang === 'auto') {
     const isTargetChinese = targetLang.startsWith('zh');
 
-    // If detected language matches target, swap to avoid translating to the same language
+    // Only swap when detected language ACTUALLY matches target language
+    // (avoid translating Chinese→Chinese or English→English)
     if (detectedLang === 'zh' && isTargetChinese) {
       // Chinese text detected but target is also Chinese → translate to English
       return { from: 'auto', to: 'en' };
@@ -122,6 +123,7 @@ function resolveTranslationDirection(detectedLang, sourceLang, targetLang) {
       return { from: 'auto', to: 'zh-CN' };
     } else {
       // Normal: auto-detect source, translate to target
+      // This covers: ja→zh-CN, ko→zh-CN, en→zh-CN, etc.
       return { from: 'auto', to: targetLang };
     }
   }
@@ -131,28 +133,27 @@ function resolveTranslationDirection(detectedLang, sourceLang, targetLang) {
   const isSourceChinese = sourceLang.startsWith('zh');
   const isTargetChinese = targetLang.startsWith('zh');
 
-  if (detectedLang === 'zh') {
-    // Detected Chinese text
-    if (isSourceChinese) {
-      return { from: sourceLang, to: targetLang };
-    } else if (isTargetChinese) {
-      return { from: targetLang, to: sourceLang };
-    } else {
-      // Neither source nor target is Chinese, but text is Chinese
-      // Translate from auto-detect to targetLang
-      return { from: 'auto', to: targetLang };
-    }
-  } else if (detectedLang === 'en') {
-    // Detected English text
-    if (sourceLang === 'en') {
-      return { from: 'en', to: targetLang };
-    } else if (targetLang === 'en') {
-      return { from: 'en', to: sourceLang };
-    } else {
-      return { from: 'auto', to: targetLang };
-    }
+  // Check if detected language matches source or target
+  const detectedMatchesSource =
+    (detectedLang === 'zh' && isSourceChinese) ||
+    (detectedLang === 'en' && sourceLang === 'en') ||
+    (detectedLang === 'ja' && sourceLang === 'ja') ||
+    (detectedLang === 'ko' && sourceLang === 'ko');
+
+  const detectedMatchesTarget =
+    (detectedLang === 'zh' && isTargetChinese) ||
+    (detectedLang === 'en' && targetLang === 'en') ||
+    (detectedLang === 'ja' && targetLang === 'ja') ||
+    (detectedLang === 'ko' && targetLang === 'ko');
+
+  if (detectedMatchesSource) {
+    // Text is in source language → translate to target
+    return { from: sourceLang, to: targetLang };
+  } else if (detectedMatchesTarget) {
+    // Text is in target language → translate to source (reverse direction)
+    return { from: targetLang, to: sourceLang };
   } else {
-    // Mixed or unknown — use auto-detect, translate to target
+    // Neither matches → let Google auto-detect, translate to target
     return { from: 'auto', to: targetLang };
   }
 }
@@ -187,8 +188,17 @@ async function translateWord(word, detectedLang, sourceLang, targetLang) {
     // Free Dictionary: use ONLY for phonetics and audio (English pronunciation resources)
     if (dictResult.status === 'fulfilled' && dictResult.value) {
       const dict = dictResult.value;
-      result.phonetic = dict.phonetic || '';
       result.phonetics = dict.phonetics || [];
+      // Prefer top-level phonetic; fallback to first non-empty text in phonetics[]
+      result.phonetic = dict.phonetic || '';
+      if (!result.phonetic && Array.isArray(dict.phonetics)) {
+        for (const p of dict.phonetics) {
+          if (p && p.text) {
+            result.phonetic = p.text;
+            break;
+          }
+        }
+      }
     }
 
     // Google: use for translation, meanings (localized!), definitions, examples
@@ -196,7 +206,8 @@ async function translateWord(word, detectedLang, sourceLang, targetLang) {
       const g = googleResult.value;
       result.translation = g.translation || '';
       if (!result.phonetic && g.srcRomanization) {
-        result.phonetic = g.srcRomanization;
+        // Google romanization is a rough pronunciation guide, wrap in slashes
+        result.phonetic = '/' + g.srcRomanization + '/';
       }
       // Prefer Google's dictionary data (localized in target language)
       if (g.dictionary && g.dictionary.length > 0) {
@@ -312,7 +323,7 @@ async function fetchGoogleExtended(text, fromLang, toLang) {
  * The response is an array with different indices for different dt params.
  *
  * data[0] = translation segments: [[translatedText, originalText, ...], ...]
- *           Last sub-array often contains romanization: [null, null, "srcRoman", "tgtRoman"]
+ *           Last sub-array often contains romanization: [null, null, tgtRoman, srcRoman]
  * data[1] = dictionary (dt=bd): [[partOfSpeech, [translations], [[word, [reverseTranslations], null, score], ...]], ...]
  * Other indices vary: source language, definitions (dt=md), synonyms (dt=ss), examples (dt=ex)
  */
@@ -339,10 +350,12 @@ function parseGoogleExtendedResponse(data) {
       if (typeof segment[0] === 'string') {
         translationParts.push(segment[0]);
       }
-      // Romanization is in a segment like [null, null, "srcRoman", "tgtRoman"]
+      // Romanization is in a segment like [null, null, tgtRoman, srcRoman]
+      // segment[2] = target language romanization (e.g. pinyin for Chinese translation)
+      // segment[3] = source language romanization (e.g. rough pronunciation of English word)
       if (segment[0] === null && segment.length >= 4) {
-        if (segment[2]) result.srcRomanization = segment[2];
-        if (segment[3]) result.tgtRomanization = segment[3];
+        if (segment[2]) result.tgtRomanization = segment[2];
+        if (segment[3]) result.srcRomanization = segment[3];
       }
     }
     result.translation = translationParts.join('');

@@ -1,31 +1,21 @@
 /**
  * Shared Playwright fixtures for Chrome extension testing.
  * Loads the extension in a persistent Chromium context.
+ *
+ * NOTE: True headless mode is NOT possible for Chrome extension e2e tests.
+ * Chromium's --headless=new does not support --load-extension.
+ * Instead, we launch the browser off-screen (-32000,-32000) so it never
+ * appears visually or steals focus from the user's own browser.
  */
 const path = require('path');
 const { test: base, chromium } = require('@playwright/test');
-const { execSync } = require('child_process');
 
 const EXTENSION_PATH = path.resolve(__dirname, '..');
 
 /**
- * Minimize all Chromium windows via PowerShell so they don't pop up.
- * Uses Win32 API ShowWindow(SW_MINIMIZE) — no focus stealing.
- */
-function minimizeChromiumWindows() {
-  try {
-    execSync(
-      'powershell -Command "Add-Type -MemberDefinition \'[DllImport(\\\"user32.dll\\\")]public static extern bool ShowWindow(IntPtr hWnd,int nCmdShow);\' -Name Win32 -Namespace Native;Get-Process chrome -ErrorAction SilentlyContinue | ForEach-Object { [Native.Win32]::ShowWindow($_.MainWindowHandle, 6) }"',
-      { stdio: 'ignore', timeout: 5000 }
-    );
-  } catch (e) {
-    // Silently ignore — if minimization fails, tests still work
-  }
-}
-
-/**
  * Custom test fixture that launches Chromium with the extension loaded.
- * The window is minimized immediately after launch to avoid visual disruption.
+ * The browser window is positioned far off-screen so it is completely invisible
+ * and does NOT interfere with any user-visible Chrome windows.
  */
 const test = base.extend({
   context: async ({}, use) => {
@@ -38,15 +28,13 @@ const test = base.extend({
         '--disable-gpu',
         '--disable-default-apps',
         '--window-size=1280,720',
+        '--window-position=-32000,-32000',
+        '--start-minimized',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
       ],
     });
 
-    // Minimize the window immediately so it doesn't pop up and steal focus
-    minimizeChromiumWindows();
-
-    await use(context);
-    await context.close();
-  },
     await use(context);
     await context.close();
   },

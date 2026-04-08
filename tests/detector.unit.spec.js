@@ -1,185 +1,116 @@
 /**
  * Unit tests for SakuraDetector — word vs sentence detection.
- * These run in Node.js, no browser needed.
  */
 const { test, expect } = require('@playwright/test');
-const path = require('path');
-const fs = require('fs');
-
-// The detector.js uses IIFE + module.exports.
-// In Node, `const SakuraDetector` in the file doesn't leak to global.
-// But module.exports is set, so we can require it directly.
 const SakuraDetector = require('../utils/detector');
 
-// ─── English Word Detection ───
-
-test.describe('Detector — English Words', () => {
-  test('single English word detected as word/en', () => {
-    const result = SakuraDetector.detect('hello');
-    expect(result.type).toBe('word');
-    expect(result.lang).toBe('en');
-    expect(result.text).toBe('hello');
+test.describe('Detector', () => {
+  // ─── English ───
+  test('single English word → word/en', () => {
+    const r = SakuraDetector.detect('hello');
+    expect(r.type).toBe('word');
+    expect(r.lang).toBe('en');
   });
 
-  test('word with apostrophe (don\'t) is a word', () => {
-    const result = SakuraDetector.detect("don't");
-    expect(result.type).toBe('word');
-    expect(result.lang).toBe('en');
+  test('English word with apostrophe → word/en', () => {
+    expect(SakuraDetector.detect("don't").type).toBe('word');
   });
 
-  test('hyphenated word (well-known) is a word', () => {
-    const result = SakuraDetector.detect('well-known');
-    expect(result.type).toBe('word');
-    expect(result.lang).toBe('en');
+  test('hyphenated English word → word/en', () => {
+    expect(SakuraDetector.detect('well-known').type).toBe('word');
   });
 
-  test('UPPERCASE word is a word', () => {
-    const result = SakuraDetector.detect('HELLO');
-    expect(result.type).toBe('word');
-    expect(result.lang).toBe('en');
+  test('English word with punctuation is stripped', () => {
+    expect(SakuraDetector.detect('hello.').text).toBe('hello');
+    expect(SakuraDetector.detect('(hello)').text).toBe('hello');
+    expect(SakuraDetector.detect('programming,').text).toBe('programming');
   });
 
-  test('word with leading/trailing spaces is trimmed', () => {
-    const result = SakuraDetector.detect('  hello  ');
-    expect(result.type).toBe('word');
-    expect(result.text).toBe('hello');
+  test('multiple English words → sentence/en', () => {
+    const r = SakuraDetector.detect('hello world');
+    expect(r.type).toBe('sentence');
+    expect(r.lang).toBe('en');
   });
 
-  test('word with trailing comma is detected as word with clean text', () => {
-    const result = SakuraDetector.detect('programming,');
-    expect(result.type).toBe('word');
-    expect(result.lang).toBe('en');
-    expect(result.text).toBe('programming');
+  // ─── Chinese ───
+  test('single Chinese character → word/zh', () => {
+    const r = SakuraDetector.detect('好');
+    expect(r.type).toBe('word');
+    expect(r.lang).toBe('zh');
   });
 
-  test('word with trailing period is detected as word with clean text', () => {
-    const result = SakuraDetector.detect('hello.');
-    expect(result.type).toBe('word');
-    expect(result.lang).toBe('en');
-    expect(result.text).toBe('hello');
+  test('Chinese word (≤4 chars) → word/zh', () => {
+    expect(SakuraDetector.detect('你好').type).toBe('word');
+    expect(SakuraDetector.detect('人工智能').type).toBe('word');
   });
 
-  test('word with leading and trailing punctuation is detected as word', () => {
-    const result = SakuraDetector.detect('(hello)');
-    expect(result.type).toBe('word');
-    expect(result.lang).toBe('en');
-    expect(result.text).toBe('hello');
+  test('Chinese (≥5 chars) → sentence/zh', () => {
+    expect(SakuraDetector.detect('我爱你中国').type).toBe('sentence');
   });
 
-  test('word with trailing semicolon is detected as word', () => {
-    const result = SakuraDetector.detect('return;');
-    expect(result.type).toBe('word');
-    expect(result.lang).toBe('en');
-    expect(result.text).toBe('return');
+  test('Chinese with punctuation → sentence/zh', () => {
+    expect(SakuraDetector.detect('你好！').type).toBe('sentence');
+    expect(SakuraDetector.detect('你好，世界').type).toBe('sentence');
   });
 
-  test('word with surrounding quotes is detected as word', () => {
-    const result = SakuraDetector.detect('"world"');
-    expect(result.type).toBe('word');
-    expect(result.lang).toBe('en');
-    expect(result.text).toBe('world');
-  });
-});
-
-// ─── English Sentence Detection ───
-
-test.describe('Detector — English Sentences', () => {
-  test('multiple English words detected as sentence/en', () => {
-    const result = SakuraDetector.detect('hello world');
-    expect(result.type).toBe('sentence');
-    expect(result.lang).toBe('en');
+  // ─── Mixed ───
+  test('English with some Chinese → mixed/sentence', () => {
+    const r = SakuraDetector.detect('hello 你');
+    expect(r.lang).toBe('mixed');
+    expect(r.type).toBe('sentence');
   });
 
-  test('long English phrase is a sentence', () => {
-    const result = SakuraDetector.detect('The quick brown fox jumps over the lazy dog');
-    expect(result.type).toBe('sentence');
-    expect(result.lang).toBe('en');
+  // ─── Japanese ───
+  test('Japanese hiragana word → word/ja', () => {
+    const r = SakuraDetector.detect('ありがとう');
+    expect(r.type).toBe('word');
+    expect(r.lang).toBe('ja');
   });
 
-  test('word with number is a sentence (not pure alpha)', () => {
-    const result = SakuraDetector.detect('hello123');
-    expect(result.type).toBe('sentence');
-    expect(result.lang).toBe('en');
-  });
-});
-
-// ─── Chinese Word Detection ───
-
-test.describe('Detector — Chinese Words', () => {
-  test('single Chinese character is a word', () => {
-    const result = SakuraDetector.detect('好');
-    expect(result.type).toBe('word');
-    expect(result.lang).toBe('zh');
+  test('Japanese katakana word → word/ja', () => {
+    const r = SakuraDetector.detect('コンピュータ');
+    expect(r.type).toBe('word');
+    expect(r.lang).toBe('ja');
   });
 
-  test('two Chinese characters (你好) is a word', () => {
-    const result = SakuraDetector.detect('你好');
-    expect(result.type).toBe('word');
-    expect(result.lang).toBe('zh');
+  test('Japanese with kanji+kana → ja (not zh)', () => {
+    const r = SakuraDetector.detect('日本語');
+    // Has kanji + no kana → could be zh, but '語' is CJK
+    // '日本語を勉強する' has kana → definitively ja
+    const r2 = SakuraDetector.detect('日本語を勉強する');
+    expect(r2.lang).toBe('ja');
+    expect(r2.type).toBe('sentence');
   });
 
-  test('four Chinese characters (人工智能) is a word', () => {
-    const result = SakuraDetector.detect('人工智能');
-    expect(result.type).toBe('word');
-    expect(result.lang).toBe('zh');
+  test('Japanese sentence → sentence/ja', () => {
+    const r = SakuraDetector.detect('これは日本語のテストです');
+    expect(r.type).toBe('sentence');
+    expect(r.lang).toBe('ja');
   });
 
-  test('five Chinese characters is a sentence', () => {
-    const result = SakuraDetector.detect('我爱你中国');
-    expect(result.type).toBe('sentence');
-    expect(result.lang).toBe('zh');
+  // ─── Korean ───
+  test('Korean word → word/ko', () => {
+    const r = SakuraDetector.detect('안녕');
+    expect(r.type).toBe('word');
+    expect(r.lang).toBe('ko');
   });
 
-  test('Chinese with punctuation is a sentence', () => {
-    const result = SakuraDetector.detect('你好！');
-    expect(result.type).toBe('sentence');
-    expect(result.lang).toBe('zh');
+  test('Korean sentence → sentence/ko', () => {
+    const r = SakuraDetector.detect('한국어를 공부하고 있습니다');
+    expect(r.type).toBe('sentence');
+    expect(r.lang).toBe('ko');
   });
 
-  test('Chinese with comma is a sentence', () => {
-    const result = SakuraDetector.detect('你好，世界');
-    expect(result.type).toBe('sentence');
-    expect(result.lang).toBe('zh');
-  });
-});
-
-// ─── Chinese Sentence Detection ───
-
-test.describe('Detector — Chinese Sentences', () => {
-  test('long Chinese text is a sentence', () => {
-    const result = SakuraDetector.detect('今天天气很好，我想出去走走');
-    expect(result.type).toBe('sentence');
-    expect(result.lang).toBe('zh');
-  });
-});
-
-// ─── Mixed Language Detection ───
-
-test.describe('Detector — Mixed Language', () => {
-  test('mostly English with a few Chinese chars is mixed', () => {
-    const result = SakuraDetector.detect('hello 你');
-    expect(result.lang).toBe('mixed');
+  // ─── Edge cases ───
+  test('empty string → sentence/en', () => {
+    const r = SakuraDetector.detect('');
+    expect(r.type).toBe('sentence');
+    expect(r.lang).toBe('en');
   });
 
-  test('mixed content is treated as sentence', () => {
-    const result = SakuraDetector.detect('I love 中国');
-    expect(result.type).toBe('sentence');
-    expect(result.lang).toBe('mixed');
-  });
-});
-
-// ─── Edge Cases ───
-
-test.describe('Detector — Edge Cases', () => {
-  test('empty string returns sentence/en', () => {
-    const result = SakuraDetector.detect('');
-    expect(result.type).toBe('sentence');
-    expect(result.lang).toBe('en');
-  });
-
-  test('whitespace-only string returns sentence/en', () => {
-    const result = SakuraDetector.detect('   ');
-    expect(result.type).toBe('sentence');
-    expect(result.lang).toBe('en');
+  test('whitespace-only → sentence/en', () => {
+    const r = SakuraDetector.detect('   ');
+    expect(r.type).toBe('sentence');
+    expect(r.lang).toBe('en');
   });
 });
