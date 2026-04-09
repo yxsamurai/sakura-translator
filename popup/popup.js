@@ -319,9 +319,93 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // ─── Part-of-speech translations (localized POS labels) ───
+  const POS_TRANSLATIONS = {
+    'zh-CN': {
+      'noun': '名词', 'verb': '动词', 'adjective': '形容词', 'adverb': '副词',
+      'pronoun': '代词', 'preposition': '介词', 'conjunction': '连词',
+      'interjection': '感叹词', 'exclamation': '感叹词', 'determiner': '限定词',
+      'article': '冠词', 'numeral': '数词', 'particle': '助词',
+      'abbreviation': '缩写', 'affix': '词缀', 'phrase': '短语',
+      'idiom': '惯用语', 'prefix': '前缀', 'suffix': '后缀',
+      'auxiliary verb': '助动词', 'transitive verb': '及物动词',
+      'intransitive verb': '不及物动词', 'phrasal verb': '短语动词',
+    },
+    'zh-TW': {
+      'noun': '名詞', 'verb': '動詞', 'adjective': '形容詞', 'adverb': '副詞',
+      'pronoun': '代詞', 'preposition': '介詞', 'conjunction': '連詞',
+      'interjection': '感嘆詞', 'exclamation': '感嘆詞', 'determiner': '限定詞',
+      'article': '冠詞', 'numeral': '數詞', 'particle': '助詞',
+      'abbreviation': '縮寫', 'affix': '詞綴', 'phrase': '短語',
+      'idiom': '慣用語', 'prefix': '前綴', 'suffix': '後綴',
+      'auxiliary verb': '助動詞', 'transitive verb': '及物動詞',
+      'intransitive verb': '不及物動詞', 'phrasal verb': '片語動詞',
+    },
+    'ja': {
+      'noun': '名詞', 'verb': '動詞', 'adjective': '形容詞', 'adverb': '副詞',
+      'pronoun': '代名詞', 'preposition': '前置詞', 'conjunction': '接続詞',
+      'interjection': '感動詞', 'exclamation': '感動詞', 'determiner': '限定詞',
+      'article': '冠詞', 'numeral': '数詞', 'particle': '助詞',
+      'abbreviation': '略語', 'phrase': 'フレーズ', 'idiom': '慣用句',
+    },
+    'ko': {
+      'noun': '명사', 'verb': '동사', 'adjective': '형용사', 'adverb': '부사',
+      'pronoun': '대명사', 'preposition': '전치사', 'conjunction': '접속사',
+      'interjection': '감탄사', 'exclamation': '감탄사', 'determiner': '한정사',
+      'article': '관사', 'numeral': '수사', 'particle': '조사',
+    },
+    'fr': {
+      'noun': 'nom', 'verb': 'verbe', 'adjective': 'adjectif', 'adverb': 'adverbe',
+      'pronoun': 'pronom', 'preposition': 'préposition', 'conjunction': 'conjonction',
+      'interjection': 'interjection', 'exclamation': 'exclamation', 'determiner': 'déterminant',
+      'article': 'article', 'phrase': 'expression', 'idiom': 'idiome',
+    },
+    'de': {
+      'noun': 'Substantiv', 'verb': 'Verb', 'adjective': 'Adjektiv', 'adverb': 'Adverb',
+      'pronoun': 'Pronomen', 'preposition': 'Präposition', 'conjunction': 'Konjunktion',
+      'interjection': 'Interjektion', 'exclamation': 'Ausruf', 'determiner': 'Artikel',
+      'article': 'Artikel', 'phrase': 'Redewendung', 'idiom': 'Idiom',
+    },
+    'es': {
+      'noun': 'sustantivo', 'verb': 'verbo', 'adjective': 'adjetivo', 'adverb': 'adverbio',
+      'pronoun': 'pronombre', 'preposition': 'preposición', 'conjunction': 'conjunción',
+      'interjection': 'interjección', 'exclamation': 'exclamación', 'determiner': 'determinante',
+      'article': 'artículo', 'phrase': 'frase', 'idiom': 'modismo',
+    },
+  };
+
+  function translatePOS(pos) {
+    const lang = targetLangSelect ? targetLangSelect.value : 'en';
+    const map = POS_TRANSLATIONS[lang];
+    if (!map) return pos;
+    const key = pos.toLowerCase().trim();
+    return map[key] || pos;
+  }
+
   // ─── Simple detector ───
   function detect(text) {
     const CHINESE_REGEX = /[\u4e00-\u9fff\u3400-\u4dbf]/g;
+    const JAPANESE_KANA_REGEX = /[\u3040-\u309f\u30a0-\u30ff]/g;
+    const KOREAN_REGEX = /[\uac00-\ud7af\u1100-\u11ff\u3130-\u318f]/g;
+
+    // Japanese: kana presence is definitive
+    const japaneseKana = text.match(JAPANESE_KANA_REGEX);
+    if (japaneseKana && japaneseKana.length > 0) {
+      const cleanLen = text.replace(/\s/g, '').length;
+      const type = (cleanLen <= 6 && !/[。！？；，、,.!?;]/.test(text)) ? 'word' : 'sentence';
+      return { type, lang: 'ja', text };
+    }
+
+    // Korean
+    const koreanChars = text.match(KOREAN_REGEX);
+    const koreanRatio = koreanChars ? koreanChars.length / text.length : 0;
+    if (koreanRatio > 0.2) {
+      const cleanLen = text.replace(/\s/g, '').length;
+      const type = (cleanLen <= 4 && !/[。！？；，、,.!?;]/.test(text)) ? 'word' : 'sentence';
+      return { type, lang: 'ko', text };
+    }
+
+    // Chinese
     const chineseChars = text.match(CHINESE_REGEX);
     const chineseRatio = chineseChars ? chineseChars.length / text.length : 0;
 
@@ -385,14 +469,30 @@ document.addEventListener('DOMContentLoaded', () => {
       if (result.meanings && result.meanings.length > 0) {
         html += '<div class="result-meanings">';
         result.meanings.forEach(meaning => {
-          html += `<span class="result-pos">${escapeHtml(meaning.partOfSpeech)}</span>`;
-          const defs = (meaning.definitions || []).slice(0, 3);
-          defs.forEach(def => {
-            html += `<div class="result-def">${escapeHtml(def.definition)}</div>`;
-            if (def.example) {
-              html += `<div class="result-example">"${escapeHtml(def.example)}"</div>`;
-            }
-          });
+          html += `<span class="result-pos">${escapeHtml(translatePOS(meaning.partOfSpeech))}</span>`;
+          // dt=bd returns translation alternatives (e.g. 保留, 保持, 保有)
+          if (meaning.definitions && meaning.definitions.length > 0) {
+            html += `<div class="result-translations-list">`;
+            html += meaning.definitions.map(d => escapeHtml(d.definition)).join('；');
+            html += `</div>`;
+          }
+        });
+        html += '</div>';
+      }
+
+      // dt=md returns source-language definitions with examples
+      if (result.definitions && result.definitions.length > 0) {
+        html += '<div class="result-definitions">';
+        result.definitions.forEach(group => {
+          html += `<span class="result-pos">${escapeHtml(translatePOS(group.partOfSpeech))}</span>`;
+          if (group.definitions && group.definitions.length > 0) {
+            group.definitions.slice(0, 3).forEach((def, idx) => {
+              html += `<div class="result-def">${idx + 1}. ${escapeHtml(def.definition)}</div>`;
+              if (def.example) {
+                html += `<div class="result-example">"${escapeHtml(def.example)}"</div>`;
+              }
+            });
+          }
         });
         html += '</div>';
       }

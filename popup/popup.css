@@ -257,6 +257,20 @@ textarea::placeholder {
   }
 }
 
+.result-translations-list {
+  font-size: 14px;
+  font-weight: 500;
+  margin: 4px 0 2px 0;
+  line-height: 1.6;
+  color: #374151;
+}
+
+@media (prefers-color-scheme: dark) {
+  .result-translations-list {
+    color: #cdd6f4;
+  }
+}
+
 .result-sentence-text {
   font-size: 15px;
   line-height: 1.7;
