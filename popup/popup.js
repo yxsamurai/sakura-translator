@@ -27,6 +27,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const hoverSentenceKeySelect = document.getElementById('hoverSentenceKey');
   const manualKeySelect = document.getElementById('manualKey');
 
+  // PDF viewer toggle
+  const pdfViewerEnabled = document.getElementById('pdfViewerEnabled');
+
   // Hint elements
   const hintText = document.getElementById('hintText');
 
@@ -80,7 +83,8 @@ document.addEventListener('DOMContentLoaded', () => {
     hoverSentenceKey: 'alt',
     manualKey: 'ctrl',
     sourceLang: 'auto',
-    targetLang: 'zh-CN'
+    targetLang: 'zh-CN',
+    pdfViewerEnabled: true
   };
 
   // ─── Auto-save debounce timer ───
@@ -176,6 +180,11 @@ document.addEventListener('DOMContentLoaded', () => {
     autoSave();
   });
 
+  // ─── PDF viewer toggle ───
+  pdfViewerEnabled.addEventListener('change', () => {
+    saveNow();
+  });
+
   // ─── Swap languages button ───
   swapLangsBtn.addEventListener('click', () => {
     const src = sourceLangSelect.value;
@@ -200,7 +209,8 @@ document.addEventListener('DOMContentLoaded', () => {
       hoverSentenceKey: hoverSentenceKeySelect.value,
       manualKey: manualKeySelect.value,
       sourceLang: sourceLangSelect.value,
-      targetLang: targetLangSelect.value
+      targetLang: targetLangSelect.value,
+      pdfViewerEnabled: pdfViewerEnabled.checked
     };
   }
 
@@ -211,6 +221,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const settings = gatherSettings();
       chrome.storage.sync.set(settings);
     }, 600);
+  }
+
+  // ─── Immediate save: for single-action controls (toggles, checkboxes) ───
+  // Popup can close any time; debounce risks losing the change.
+  function saveNow() {
+    if (autoSaveTimer) clearTimeout(autoSaveTimer);
+    autoSaveTimer = null;
+    const settings = gatherSettings();
+    chrome.storage.sync.set(settings);
   }
 
   // ─── Update hint text based on current settings ───
@@ -245,6 +264,9 @@ document.addEventListener('DOMContentLoaded', () => {
       // Set language selects
       if (sourceLangSelect) sourceLangSelect.value = items.sourceLang;
       if (targetLangSelect) targetLangSelect.value = items.targetLang;
+
+      // Set PDF viewer toggle
+      if (pdfViewerEnabled) pdfViewerEnabled.checked = items.pdfViewerEnabled !== false;
 
       // Update hint text
       updateHintText();

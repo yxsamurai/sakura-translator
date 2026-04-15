@@ -3,7 +3,84 @@
  * Handles translation API calls to avoid CORS issues in content scripts.
  * Uses Google Translate with extended parameters for dictionary-level data.
  * Supports configurable source and target languages.
+ * Also intercepts PDF URLs and redirects to the built-in PDF viewer.
  */
+
+// ─── PDF Interception (Manifest V3 compatible) ───
+// When Chrome navigates to a URL ending in .pdf, redirect to our custom
+// pdf.js viewer which renders the PDF with real DOM text layers, enabling
+// the content script's hover/selection translation.
+//
+// Uses webNavigation.onBeforeNavigate + tabs.update because Manifest V3
+// does not support webRequest blocking (webRequestBlocking permission).
+// This approach detects PDF navigations and redirects the tab.
+
+const PDF_VIEWER_URL = chrome.runtime.getURL('pdf-viewer.html');
+
+// Track tabs that we've already redirected to avoid infinite loops
+const redirectedTabs = new Set();
+
+chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
+  // Only intercept main frame navigations (not subresources, not iframes)
+  if (details.frameId !== 0) return;
+
+  // Check if PDF viewer is enabled in settings
+  const settings = await getSettings();
+  if (settings.pdfViewerEnabled === false) return;
+
+  const url = details.url;
+
+  // Skip already-redirected URLs (our own viewer)
+  if (url.startsWith(PDF_VIEWER_URL)) return;
+
+  // Skip chrome:// and extension:// URLs
+  if (url.startsWith('chrome://') || url.startsWith('chrome-extension://')) return;
+
+  // Intercept URLs that end with .pdf (common pattern)
+  // Also catch URLs with .pdf?query or .pdf#hash
+  const urlWithoutHash = url.split('#')[0].split('?')[0];
+  if (urlWithoutHash.toLowerCase().endsWith('.pdf')) {
+    // Avoid redirecting the same tab twice
+    const tabKey = `${details.tabId}:${url}`;
+    if (redirectedTabs.has(tabKey)) {
+      redirectedTabs.delete(tabKey);
+      return;
+    }
+
+    const viewerUrl = `${PDF_VIEWER_URL}?file=${encodeURIComponent(url)}&name=${encodeURIComponent(extractFileName(url))}`;
+
+    // Mark this tab as redirected to prevent loops
+    redirectedTabs.add(`${details.tabId}:${viewerUrl}`);
+
+    // Redirect the tab to our viewer
+    chrome.tabs.update(details.tabId, { url: viewerUrl });
+
+    // Clean up the tracking entry after a delay
+    setTimeout(() => {
+      redirectedTabs.delete(`${details.tabId}:${viewerUrl}`);
+      redirectedTabs.delete(tabKey);
+    }, 5000);
+  }
+});
+
+/**
+ * Extract a readable filename from a URL for display in the PDF viewer toolbar.
+ */
+function extractFileName(url) {
+  try {
+    const urlObj = new URL(url);
+    const path = urlObj.pathname;
+    const parts = path.split('/');
+    const lastPart = parts[parts.length - 1];
+    if (lastPart && lastPart.toLowerCase().endsWith('.pdf')) {
+      return decodeURIComponent(lastPart);
+    }
+    // Fallback: use hostname
+    return urlObj.hostname || 'PDF Document';
+  } catch (e) {
+    return 'PDF Document';
+  }
+}
 
 // ─── API Endpoints ───
 const GOOGLE_TRANSLATE_API = 'https://translate.googleapis.com/translate_a/single';
@@ -50,7 +127,8 @@ const DEFAULT_SETTINGS = {
   hoverSentenceKey: 'alt',
   manualKey: 'ctrl',
   sourceLang: 'auto',
-  targetLang: 'zh-CN'
+  targetLang: 'zh-CN',
+  pdfViewerEnabled: true
 };
 
 async function getSettings() {

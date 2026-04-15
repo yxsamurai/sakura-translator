@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sakura PDF Viewer</title>
+  <link rel="stylesheet" href="pdf-viewer.css">
+</head>
+<body>
+  <!-- Toolbar -->
+  <div id="toolbar">
+    <div class="toolbar-left">
+      <button id="prevPage" title="Previous Page">&#9664;</button>
+      <span id="pageInfo">Page 1 / 1</span>
+      <button id="nextPage" title="Next Page">&#9654;</button>
+    </div>
+    <div class="toolbar-center">
+      <span id="fileName" title="">PDF Document</span>
+    </div>
+    <div class="toolbar-right">
+      <button id="zoomOut" title="Zoom Out">&#8722;</button>
+      <span id="zoomLevel">100%</span>
+      <button id="zoomIn" title="Zoom In">&#43;</button>
+      <button id="fitWidth" title="Fit Width">&#8690;</button>
+    </div>
+  </div>
+
+  <!-- Loading overlay -->
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Loading PDF...</div>
+  </div>
+
+  <!-- Error overlay -->
+  <div id="errorOverlay" class="error-overlay hidden">
+    <div class="error-icon">&#9888;</div>
+    <div class="error-title">Failed to load PDF</div>
+    <div id="errorMessage" class="error-message"></div>
+    <button id="retryBtn" class="retry-btn">Retry</button>
+  </div>
+
+  <!-- PDF pages container -->
+  <div id="pagesContainer"></div>
+
+  <!-- PDF.js library -->
+  <script src="lib/pdfjs/pdf.js"></script>
+  <!-- Translation support (content scripts do NOT auto-inject into extension pages) -->
+  <script src="utils/detector.js"></script>
+  <script src="utils/translator.js"></script>
+  <script src="content/content.js"></script>
+  <!-- PDF viewer logic -->
+  <script src="pdf-viewer.js"></script>
+</body>
+</html>

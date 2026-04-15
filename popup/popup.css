@@ -730,6 +730,93 @@ textarea::placeholder {
   }
 }
 
+/* ─── PDF Toggle Switch ─── */
+.pdf-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+
+.pdf-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #374151;
+}
+
+@media (prefers-color-scheme: dark) {
+  .pdf-toggle-label {
+    color: #cdd6f4;
+  }
+}
+
+.pdf-toggle-label svg {
+  flex-shrink: 0;
+  color: #6b7280;
+}
+
+@media (prefers-color-scheme: dark) {
+  .pdf-toggle-label svg {
+    color: #a6adc8;
+  }
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #d1d5db;
+  transition: 0.2s;
+  border-radius: 20px;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background: white;
+  transition: 0.2s;
+  border-radius: 50%;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background: #2563eb;
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(16px);
+}
+
+@media (prefers-color-scheme: dark) {
+  .toggle-slider {
+    background: #45475a;
+  }
+  .toggle-switch input:checked + .toggle-slider {
+    background: #89b4fa;
+  }
+}
+
 /* Engine Badge */
 .result-engine {
   text-align: right;
