@@ -6,6 +6,8 @@
  * pure functions and test them directly.
  */
 const { test, expect } = require('@playwright/test');
+const fs = require('fs');
+const path = require('path');
 
 // ─── Extract pure functions from background.js ───
 
@@ -136,6 +138,28 @@ test.describe('mapToGoogleLang', () => {
   test('passes through other language codes unchanged', () => {
     expect(mapToGoogleLang('en')).toBe('en');
     expect(mapToGoogleLang('ja')).toBe('ja');
+  });
+});
+
+test.describe('external translation dependencies', () => {
+  test('does not depend on Free Dictionary API', () => {
+    const backgroundSource = fs.readFileSync(path.join(__dirname, '..', 'background.js'), 'utf8');
+    const manifestSource = fs.readFileSync(path.join(__dirname, '..', 'manifest.json'), 'utf8');
+
+    expect(backgroundSource).not.toContain('api.dictionaryapi.dev');
+    expect(backgroundSource).not.toContain('fetchDictionary');
+    expect(manifestSource).not.toContain('api.dictionaryapi.dev');
+  });
+
+  test('sentence translation requests only dt=t from Google', () => {
+    const backgroundSource = fs.readFileSync(path.join(__dirname, '..', 'background.js'), 'utf8');
+    const sentenceBlock = backgroundSource.match(/async function translateSentence[\s\S]*?\n}/)[0];
+
+    expect(sentenceBlock).toContain("['t']");
+    expect(sentenceBlock).not.toContain("'bd'");
+    expect(sentenceBlock).not.toContain("'rm'");
+    expect(sentenceBlock).not.toContain("'md'");
+    expect(sentenceBlock).not.toContain("'ex'");
   });
 });
 

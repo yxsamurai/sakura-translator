@@ -72,7 +72,6 @@
 | API | 用途 | 料金 |
 |-----|------|------|
 | [Google Translate](https://translate.googleapis.com/) | 多言語翻訳、拡張辞書データ | 無料 |
-| [Free Dictionary API](https://dictionaryapi.dev/) | 英単語の定義、発音記号、例文 | 無料、無制限 |
 
 ## 📁 プロジェクト構成
 

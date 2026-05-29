@@ -72,7 +72,6 @@ All settings auto-save immediately.
 | API | Purpose | Cost |
 |-----|---------|------|
 | [Google Translate](https://translate.googleapis.com/) | Multi-language translation with extended dictionary data | Free |
-| [Free Dictionary API](https://dictionaryapi.dev/) | English word definitions, phonetics & examples | Free, unlimited |
 
 ## 📁 Project Structure
 

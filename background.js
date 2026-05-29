@@ -84,7 +84,6 @@ function extractFileName(url) {
 
 // ─── API Endpoints ───
 const GOOGLE_TRANSLATE_API = 'https://translate.googleapis.com/translate_a/single';
-const DICTIONARY_API = 'https://api.dictionaryapi.dev/api/v2/entries/en/';
 
 // ─── Supported Languages ───
 const SUPPORTED_LANGUAGES = {
@@ -253,74 +252,22 @@ async function translateWord(word, detectedLang, sourceLang, targetLang) {
     engine: 'google'
   };
 
-  // Only use Free Dictionary API if the word is English
-  const isEnglishWord = detectedLang === 'en';
-
-  if (isEnglishWord) {
-    // English word: get dictionary details + Google extended translation in parallel
-    const [dictResult, googleResult] = await Promise.allSettled([
-      fetchDictionary(word),
-      fetchGoogleExtended(word, direction.from, direction.to)
-    ]);
-
-    // Free Dictionary: use ONLY for phonetics and audio (English pronunciation resources)
-    if (dictResult.status === 'fulfilled' && dictResult.value) {
-      const dict = dictResult.value;
-      result.phonetics = dict.phonetics || [];
-      // Prefer top-level phonetic; fallback to first non-empty text in phonetics[]
-      result.phonetic = dict.phonetic || '';
-      if (!result.phonetic && Array.isArray(dict.phonetics)) {
-        for (const p of dict.phonetics) {
-          if (p && p.text) {
-            result.phonetic = p.text;
-            break;
-          }
-        }
-      }
+  const googleResult = await fetchGoogleExtended(word, direction.from, direction.to);
+  if (googleResult) {
+    result.translation = googleResult.translation || '';
+    if (googleResult.srcRomanization) {
+      result.phonetic = detectedLang === 'en'
+        ? '/' + googleResult.srcRomanization + '/'
+        : googleResult.srcRomanization;
     }
-
-    // Google: use for translation, meanings (localized!), definitions, examples
-    if (googleResult.status === 'fulfilled' && googleResult.value) {
-      const g = googleResult.value;
-      result.translation = g.translation || '';
-      if (!result.phonetic && g.srcRomanization) {
-        // Google romanization is a rough pronunciation guide, wrap in slashes
-        result.phonetic = '/' + g.srcRomanization + '/';
-      }
-      // Prefer Google's dictionary data (localized in target language)
-      if (g.dictionary && g.dictionary.length > 0) {
-        result.meanings = g.dictionary;
-      }
-      // Pass through definitions and examples from Google
-      if (g.definitions && g.definitions.length > 0) {
-        result.definitions = g.definitions;
-      }
-      if (g.examples && g.examples.length > 0) {
-        result.examples = g.examples;
-      }
+    if (googleResult.dictionary && googleResult.dictionary.length > 0) {
+      result.meanings = googleResult.dictionary;
     }
-
-    // Fallback: if Google had no dictionary data, use Free Dictionary meanings
-    if (result.meanings.length === 0 && dictResult.status === 'fulfilled' && dictResult.value) {
-      result.meanings = dictResult.value.meanings || [];
+    if (googleResult.definitions && googleResult.definitions.length > 0) {
+      result.definitions = googleResult.definitions;
     }
-  } else {
-    // Non-English word: use Google extended translation (includes romanization + dictionary)
-    const googleResult = await fetchGoogleExtended(word, direction.from, direction.to);
-    if (googleResult) {
-      result.translation = googleResult.translation || '';
-      if (googleResult.srcRomanization) {
-        result.phonetic = googleResult.srcRomanization;
-      }
-      if (googleResult.dictionary && googleResult.dictionary.length > 0) {
-        result.meanings = googleResult.dictionary;
-      }
-      if (googleResult.definitions && googleResult.definitions.length > 0) {
-        result.definitions = googleResult.definitions;
-      }
-      if (googleResult.examples && googleResult.examples.length > 0) {
-        result.examples = googleResult.examples;
-      }
+    if (googleResult.examples && googleResult.examples.length > 0) {
+      result.examples = googleResult.examples;
     }
   }
 
@@ -330,7 +277,7 @@ async function translateWord(word, detectedLang, sourceLang, targetLang) {
 // ─── Sentence Translation ───
 async function translateSentence(text, detectedLang, sourceLang, targetLang) {
   const direction = resolveTranslationDirection(detectedLang, sourceLang, targetLang);
-  const googleResult = await fetchGoogleExtended(text, direction.from, direction.to);
+  const googleResult = await fetchGoogleExtended(text, direction.from, direction.to, ['t']);
 
   return {
     type: 'sentence',
@@ -341,32 +288,14 @@ async function translateSentence(text, detectedLang, sourceLang, targetLang) {
   };
 }
 
-// ─── API: Free Dictionary (English words only) ───
-async function fetchDictionary(word) {
-  try {
-    const response = await fetch(`${DICTIONARY_API}${encodeURIComponent(word.toLowerCase())}`, {
-      signal: AbortSignal.timeout(5000)
-    });
-    if (!response.ok) return null;
-    const data = await response.json();
-    if (Array.isArray(data) && data.length > 0) {
-      return data[0];
-    }
-    return null;
-  } catch (e) {
-    console.warn('[Sakura] Dictionary API error:', e.message);
-    return null;
-  }
-}
-
 // ─── API: Google Translate Extended (Free endpoint) ───
-// Uses extended dt parameters to get dictionary-level data:
+// Uses configurable dt parameters:
 //   dt=t  → translation
 //   dt=bd → dictionary (part of speech + alternative translations)
 //   dt=rm → romanization/pinyin
 //   dt=md → definitions
 //   dt=ex → examples
-async function fetchGoogleExtended(text, fromLang, toLang) {
+async function fetchGoogleExtended(text, fromLang, toLang, dtParams = ['t', 'bd', 'rm', 'md', 'ex']) {
   const googleFrom = mapToGoogleLang(fromLang);
   const googleTo = mapToGoogleLang(toLang);
 
@@ -375,12 +304,9 @@ async function fetchGoogleExtended(text, fromLang, toLang) {
   url.searchParams.set('sl', googleFrom);
   url.searchParams.set('tl', googleTo);
   url.searchParams.set('q', text);
-  // Extended parameters for dictionary-level data
-  url.searchParams.append('dt', 't');   // translation
-  url.searchParams.append('dt', 'bd');  // dictionary
-  url.searchParams.append('dt', 'rm');  // romanization/pinyin
-  url.searchParams.append('dt', 'md');  // definitions
-  url.searchParams.append('dt', 'ex');  // examples
+  for (const dt of dtParams) {
+    url.searchParams.append('dt', dt);
+  }
 
   try {
     const response = await fetch(url.toString(), {

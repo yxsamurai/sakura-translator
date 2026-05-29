@@ -14,8 +14,7 @@
     "webNavigation"
   ],
   "host_permissions": [
-    "https://translate.googleapis.com/*",
-    "https://api.dictionaryapi.dev/*"
+    "https://translate.googleapis.com/*"
   ],
   "background": {
     "service_worker": "background.js"

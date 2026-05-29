@@ -71,7 +71,6 @@
 | API | 用途 | 费用 |
 |-----|------|------|
 | [Google Translate](https://translate.googleapis.com/) | 多语言翻译，提供扩展词典数据 | 免费 |
-| [Free Dictionary API](https://dictionaryapi.dev/) | 英文单词释义、音标和例句 | 免费，无限制 |
 
 ## 📁 项目结构
 

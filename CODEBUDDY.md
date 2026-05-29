@@ -4,7 +4,7 @@ This file provides guidance to CodeBuddy Code when working with code in this rep
 
 ## Project Overview
 
-**Sakura Translator** is a Chrome extension (Manifest v3) that provides instant Chinese-English translation with dictionary-level detail. It uses Google Translate Extended API and Free Dictionary API without requiring authentication.
+**Sakura Translator** is a Chrome extension (Manifest v3) that provides instant Chinese-English translation with dictionary-level detail. It uses Google Translate Extended API without requiring authentication.
 
 **Architecture**: Service worker (background) + content script (webpage injection) + popup UI
 
@@ -78,7 +78,6 @@ npm run test:content
 
 **API Endpoints**:
 - Google Translate Extended: `https://translate.googleapis.com/translate_a/single`
-- Free Dictionary: `https://api.dictionaryapi.dev/api/v2/entries/en/`
 
 **Response Types**:
 - Word: `{ type, original, translation, phonetic, phonetics[], meanings[], definitions[], examples[], lang, engine }`
@@ -174,7 +173,7 @@ Complete MD5 hash implementation (currently unused; was likely for older Baidu A
 - Service worker: `background.js`
 - Content scripts: `utils/detector.js`, `utils/translator.js`, `content/content.js` (run at `document_idle`)
 - Permissions: `storage`, `activeTab`
-- Host permissions: Google Translate Extended, Free Dictionary API
+- Host permissions: Google Translate Extended
 - Action: Popup UI (`popup/popup.html`)
 
 **`playwright.config.js`**:
@@ -258,7 +257,7 @@ Settings persist via Chrome storage sync:
 
 ## Important Notes
 
-- **No Authentication Required**: Uses free public APIs (Google Translate, Free Dictionary)
+- **No Authentication Required**: Uses the free public Google Translate endpoint
 - **Manifest v3**: Modern Chrome extension format; no content_security_policy overrides
 - **Service Worker Lifecycle**: Background script may pause/resume; always use async messaging
 - **Windows Path**: Use forward slashes in Bash commands: `npm run test` (not backslashes)
