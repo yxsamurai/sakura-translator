@@ -10,7 +10,7 @@
 
 - **Hover / Select Translation** — Two selection modes to choose from:
   - **Hover Mode**: Just hover over text and press a modifier key to auto-select and translate
-  - **Manual Mode**: Drag to highlight text, then press a modifier key to trigger translation
+  - **Manual Mode**: Press the trigger key first, then drag to highlight text and translate
 - **Smart Detection** — Automatically detects whether you selected a word or sentence
 - **Dictionary Mode** — Single words get detailed dictionary-level translations with phonetics, parts of speech, definitions, and usage examples
 - **Sentence Mode** — Sentences get clean, direct translations
@@ -47,10 +47,10 @@
 
 ### On-Page Translation (Manual Mode)
 
-1. **Drag** to highlight any text on a webpage
-2. While holding the modifier key (default: **Ctrl**), release the selection
-3. Or select first, then press the modifier key
-4. A floating popup appears with the translation
+1. Press and hold the modifier key first (default: **Ctrl**)
+2. **Drag** to highlight text while holding the key
+3. Release the mouse to open the translation popup
+4. Selecting text first and pressing the key afterwards will not trigger translation, preventing accidental popups
 
 ### Popup Translation
 

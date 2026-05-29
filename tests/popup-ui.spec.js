@@ -90,7 +90,7 @@ test.describe('Popup — Hint Text', () => {
   test('changing mode updates hint text', async ({ popup }) => {
     await popup.locator('#settingsBtn').click();
     await popup.locator('#modeTabManual').click();
-    await expect(popup.locator('.hint')).toContainText('Select');
+    await expect(popup.locator('.hint')).toContainText('before selecting');
   });
 });
 

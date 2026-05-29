@@ -114,13 +114,14 @@ const test = base.extend({
 async function ctrlSelectElement(page, selector) {
   await page.evaluate((sel) => {
     const el = document.querySelector(sel);
+    const rect = el.getBoundingClientRect();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Control', code: 'ControlLeft', ctrlKey: true, bubbles: true }));
+    document.dispatchEvent(new MouseEvent('mousedown', { clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2, ctrlKey: true, bubbles: true }));
     const range = document.createRange();
     range.selectNodeContents(el);
     const selection = window.getSelection();
     selection.removeAllRanges();
     selection.addRange(range);
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Control', code: 'ControlLeft', ctrlKey: true, bubbles: true }));
-    const rect = el.getBoundingClientRect();
     document.dispatchEvent(new MouseEvent('mouseup', { clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2, ctrlKey: true, bubbles: true }));
   }, selector);
   await page.waitForTimeout(150);
@@ -301,18 +302,19 @@ test.describe('Content Rendering', () => {
   });
 });
 
-// ─── Workflow 2: Select Then Hotkey ───
+// ─── Select Then Hotkey Guard ───
 
-test.describe('Select Then Hotkey', () => {
-  test('select text then press Ctrl shows popup', async ({ testPage }) => {
+test.describe('Select Then Hotkey Guard', () => {
+  test('select text then press Ctrl does NOT show popup', async ({ testPage }) => {
     await selectThenHotkey(testPage, '#english-word');
-    await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
-    await expect(testPage.locator('.sakura-original')).toHaveText('hello');
+    await testPage.waitForTimeout(1000);
+    await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached();
   });
 
-  test('select-then-Ctrl on Chinese word shows popup', async ({ testPage }) => {
+  test('select-then-Ctrl on Chinese word does NOT show popup', async ({ testPage }) => {
     await selectThenHotkey(testPage, '#chinese-word');
-    await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
+    await testPage.waitForTimeout(1000);
+    await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached();
   });
 });
 
@@ -324,11 +326,12 @@ test.describe('Configurable Shortcuts', () => {
     await testPage.waitForTimeout(100);
     await testPage.evaluate(() => {
       const el = document.querySelector('#english-word');
+      const rect = el.getBoundingClientRect();
+      document.dispatchEvent(new MouseEvent('mousedown', { clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2, altKey: true, bubbles: true }));
       const range = document.createRange();
       range.selectNodeContents(el);
       window.getSelection().removeAllRanges();
       window.getSelection().addRange(range);
-      const rect = el.getBoundingClientRect();
       document.dispatchEvent(new MouseEvent('mouseup', { clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2, altKey: true, bubbles: true }));
     });
     await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
@@ -347,11 +350,12 @@ test.describe('Configurable Shortcuts', () => {
     await testPage.waitForTimeout(100);
     await testPage.evaluate(() => {
       const el = document.querySelector('#english-word');
+      const rect = el.getBoundingClientRect();
+      document.dispatchEvent(new MouseEvent('mousedown', { clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2, ctrlKey: true, shiftKey: true, bubbles: true }));
       const range = document.createRange();
       range.selectNodeContents(el);
       window.getSelection().removeAllRanges();
       window.getSelection().addRange(range);
-      const rect = el.getBoundingClientRect();
       document.dispatchEvent(new MouseEvent('mouseup', { clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2, ctrlKey: true, shiftKey: true, bubbles: true }));
     });
     await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
@@ -399,11 +403,12 @@ test.describe('Workflow Conflicts', () => {
     await expect(testPage.locator('.sakura-translation-text')).toHaveText('你好');
   });
 
-  test('select-then-Ctrl still works in manual mode', async ({ testPage }) => {
+  test('select-then-Ctrl does NOT work in manual mode', async ({ testPage }) => {
     await testPage.evaluate(() => { chrome.storage.sync.set({ selectionMode: 'manual' }); });
     await testPage.waitForTimeout(100);
     await selectThenHotkey(testPage, '#english-word');
-    await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
+    await testPage.waitForTimeout(1000);
+    await expect(testPage.locator('#sakura-translator-root')).not.toBeAttached();
   });
 
   test('switching from hover to manual mode works', async ({ testPage }) => {

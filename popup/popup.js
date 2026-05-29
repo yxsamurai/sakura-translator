@@ -245,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       const key = KEY_LABELS[manualKeySelect.value] || 'Ctrl';
       if (hintText) {
-        hintText.innerHTML = `<strong id="hintShortcut">${key} + Select</strong> text on any page to translate`;
+        hintText.innerHTML = `Hold <strong id="hintShortcut">${key}</strong> before selecting text to translate`;
       }
     }
   }

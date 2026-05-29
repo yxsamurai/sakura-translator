@@ -1,7 +1,7 @@
 /**
  * Sakura Translator - Content Script
- * Detects hotkey+selection and shows translation popup.
- * Supports: select-then-hotkey and hotkey-then-select workflows.
+ * Detects trigger-key-first selection and shows translation popup.
+ * Supports hover selection and trigger-key-first manual selection workflows.
  */
 
 (() => {
@@ -176,45 +176,29 @@
     return isKeyActive(manualKey, e);
   }
 
-  function isShortcutKeyDown(e) {
-    return isKeyDown(manualKey, e);
-  }
 
-  // ─── Workflow 1: Hotkey held + mouseup (original behavior) ───
-  document.addEventListener('mouseup', async (e) => {
-    if (!isShortcutActive(e)) return;
+  // ─── Manual selection workflow: press trigger key first, then drag-select ───
+  // Requiring the shortcut before selection starts prevents accidental popups when
+  // users select text normally and press a modifier afterwards.
+  let manualSelectionStartedWithShortcut = false;
 
-    const selection = window.getSelection();
-    const text = selection?.toString().trim();
-
-    if (!text || text.length === 0 || text.length > 2000) return;
-
-    const range = selection.getRangeAt(0);
-    const rect = range.getBoundingClientRect();
-
-    showPopup(rect, text);
+  document.addEventListener('mousedown', (e) => {
+    manualSelectionStartedWithShortcut = isShortcutActive(e);
   });
 
-  // ─── Workflow 2: Select first, then press hotkey ───
-  document.addEventListener('keydown', (e) => {
-    // Skip if popup is already showing
-    if (popupRoot) return;
+  document.addEventListener('mouseup', async (e) => {
+    const startedWithShortcut = manualSelectionStartedWithShortcut;
+    manualSelectionStartedWithShortcut = false;
 
-    if (!isShortcutKeyDown(e)) return;
+    if (!startedWithShortcut || !isShortcutActive(e)) return;
 
     const selection = window.getSelection();
     const text = selection?.toString().trim();
 
     if (!text || text.length === 0 || text.length > 2000) return;
 
-    // Must have a valid range
-    if (selection.rangeCount === 0) return;
-
     const range = selection.getRangeAt(0);
     const rect = range.getBoundingClientRect();
-
-    // Ignore collapsed selections (no actual selection)
-    if (rect.width === 0 && rect.height === 0) return;
 
     showPopup(rect, text);
   });
