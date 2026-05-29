@@ -17,6 +17,10 @@ A clean, minimal translation Chrome extension. Hover or select text on any webpa
 - 🔧 **Configurable Hotkeys** — Customize modifier keys (Ctrl/Alt/Shift) for word and sentence selection
 - 🆓 **Zero Config** — Works out of the box with free APIs, no API keys needed
 
+## Design System
+
+The UI follows an Open Design-inspired `Modern Minimal + Soft Warm` direction. See `DESIGN.md` for the token source of truth, component rules, and anti-slop checklist.
+
 ## 🚀 Quick Start
 
 1. Clone this repository

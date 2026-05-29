@@ -171,14 +171,14 @@ test.describe('Popup Appearance', () => {
     await expect(testPage.locator('#sakura-translator-root')).toBeAttached({ timeout: 5000 });
   });
 
-  test('popup has white background (light mode)', async ({ testPage }) => {
+  test('popup has warm paper background (light mode)', async ({ testPage }) => {
     await ctrlSelectElement(testPage, '#english-word');
     await expect(testPage.locator('.sakura-brand')).toBeAttached({ timeout: 5000 });
     const bg = await testPage.evaluate(() => {
       const root = document.querySelector('#sakura-translator-root');
       return window.getComputedStyle(root.shadowRoot.querySelector('.sakura-popup')).backgroundColor;
     });
-    expect(bg).toBe('rgb(255, 255, 255)');
+    expect(bg).toBe('rgb(255, 250, 242)');
   });
 
   test('popup has dark background in dark mode', async ({ page, testServer }) => {
@@ -201,7 +201,7 @@ test.describe('Popup Appearance', () => {
       const root = document.querySelector('#sakura-translator-root');
       return window.getComputedStyle(root.shadowRoot.querySelector('.sakura-popup')).backgroundColor;
     });
-    expect(bg).toBe('rgb(30, 30, 46)');
+    expect(bg).toBe('rgb(28, 25, 23)');
   });
 
   test('shadow DOM isolates popup from host page CSS', async ({ testPage }) => {
@@ -216,7 +216,7 @@ test.describe('Popup Appearance', () => {
       const root = document.querySelector('#sakura-translator-root');
       return window.getComputedStyle(root.shadowRoot.querySelector('.sakura-popup')).backgroundColor;
     });
-    expect(bg).toBe('rgb(255, 255, 255)');
+    expect(bg).toBe('rgb(255, 250, 242)');
   });
 });
 

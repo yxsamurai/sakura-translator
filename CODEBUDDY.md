@@ -109,7 +109,7 @@ npm run test:content
 
 **Localization**: Supports part-of-speech labels in 7+ languages (Chinese, Japanese, Korean, French, German, Spanish)
 
-**Styling**: `content/content.css` (9166 bytes) - Material Design-inspired dark mode support via `prefers-color-scheme`
+**Styling**: `content/content.css` - Open Design-inspired Modern Minimal + Soft Warm styling via `DESIGN.md`, with dark mode support via `prefers-color-scheme`
 
 ---
 
@@ -128,7 +128,7 @@ npm run test:content
 **Code**:
 - `popup.html` - Structure and form layout
 - `popup.js` (13KB) - Settings persistence, UI state management, translation requests
-- `popup.css` (12KB) - Responsive Material Design styling
+- `popup.css` - Open Design-inspired styling that consumes the `DESIGN.md` token system
 
 ---
 

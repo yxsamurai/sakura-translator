@@ -73,6 +73,10 @@ All settings auto-save immediately.
 |-----|---------|------|
 | [Google Translate](https://translate.googleapis.com/) | Multi-language translation with extended dictionary data | Free |
 
+## Design System
+
+The popup and in-page translation surfaces follow an Open Design-inspired `Modern Minimal + Soft Warm` direction. The source of truth is `DESIGN.md`, which defines `--od-*` tokens, component rules, and the anti-slop checklist.
+
 ## 📁 Project Structure
 
 ```

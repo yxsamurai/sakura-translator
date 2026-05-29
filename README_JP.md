@@ -73,6 +73,10 @@
 |-----|------|------|
 | [Google Translate](https://translate.googleapis.com/) | 多言語翻訳、拡張辞書データ | 無料 |
 
+## デザインシステム
+
+ポップアップとページ内翻訳フローティング UI は、Open Design に着想を得た `Modern Minimal + Soft Warm` 方向に従います。`DESIGN.md` がデザインの source of truth で、`--od-*` tokens、コンポーネントルール、anti-slop チェックリストを定義します。
+
 ## 📁 プロジェクト構成
 
 ```

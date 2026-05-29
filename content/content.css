@@ -1,133 +1,55 @@
-/* ─── Sakura Translator Popup ─── */
+/* ─── Sakura Translator Floating Popup · Open Design-inspired ─── */
 
 :host {
   position: fixed;
   z-index: 2147483647;
   pointer-events: none;
+  --od-bg: #fffaf2;
+  --od-surface: #ffffff;
+  --od-text: #171717;
+  --od-muted: #62594c;
+  --od-subtle: #8b8174;
+  --od-border: #e8ddcc;
+  --od-border-strong: #d8c8ae;
+  --od-accent: #b7791f;
+  --od-accent-strong: #8a520f;
+  --od-accent-soft: #fff1d6;
+  --od-danger: #b42318;
+  --od-shadow: 0 20px 60px rgba(41, 27, 8, 0.18), 0 3px 12px rgba(41, 27, 8, 0.1);
+  --od-font: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Nunito Sans', Roboto, 'Helvetica Neue', Arial, 'Noto Sans SC', sans-serif;
 }
 
 :host * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans SC', sans-serif;
+  font-family: var(--od-font);
   line-height: 1.5;
 }
 
 .sakura-popup {
   pointer-events: auto;
   position: absolute;
-  min-width: 280px;
-  max-width: 420px;
-  max-height: 400px;
+  min-width: 292px;
+  max-width: 440px;
+  max-height: 420px;
   overflow-y: auto;
   overflow-x: hidden;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
-  padding: 6px;
-  animation: sakura-fade-in 0.15s ease-out;
-  color: #1f2937;
+  background: #fffaf2;
+  border: 1px solid var(--od-border);
+  border-radius: 18px;
+  box-shadow: var(--od-shadow);
+  padding: 7px;
+  animation: sakura-fade-in 0.16s ease-out;
+  color: var(--od-text);
   font-size: 14px;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  backdrop-filter: blur(18px);
 }
 
-/* Dark mode */
-@media (prefers-color-scheme: dark) {
-  .sakura-popup {
-    background: #1e1e2e;
-    border-color: #313244;
-    color: #cdd6f4;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
-  }
-
-  .sakura-header {
-    border-bottom-color: #313244 !important;
-  }
-
-  .sakura-original {
-    color: #cdd6f4 !important;
-  }
-
-  .sakura-phonetic {
-    color: #a6adc8 !important;
-  }
-
-  .sakura-translation-text {
-    color: #89b4fa !important;
-    background: rgba(137, 180, 250, 0.1) !important;
-  }
-
-  .sakura-divider {
-    background: #313244 !important;
-  }
-
-  .sakura-meaning-pos {
-    color: #f38ba8 !important;
-    background: rgba(243, 139, 168, 0.1) !important;
-  }
-
-  .sakura-meaning-def {
-    color: #cdd6f4 !important;
-  }
-
-  .sakura-translations-list {
-    color: #cdd6f4 !important;
-  }
-
-  .sakura-meaning-example {
-    color: #a6adc8 !important;
-    border-left-color: #45475a !important;
-  }
-
-  .sakura-section-title {
-    color: #a6adc8 !important;
-    border-bottom-color: #313244 !important;
-  }
-
-  .sakura-def-item {
-    color: #bac2de !important;
-  }
-
-  .sakura-def-number {
-    color: #a6adc8 !important;
-  }
-
-  .sakura-example-item {
-    color: #a6adc8 !important;
-    border-left-color: #45475a !important;
-  }
-
-  .sakura-sentence-original {
-    color: #a6adc8 !important;
-  }
-
-  .sakura-sentence-translation {
-    color: #cdd6f4 !important;
-  }
-
-  .sakura-loading-bar {
-    background: #313244 !important;
-  }
-
-  .sakura-loading-bar::after {
-    background: #89b4fa !important;
-  }
-
-  .sakura-error {
-    color: #f38ba8 !important;
-  }
-
-  .sakura-brand {
-    color: #585b70 !important;
-  }
-}
-
-/* Scrollbar */
 .sakura-popup::-webkit-scrollbar {
-  width: 4px;
+  width: 5px;
 }
 
 .sakura-popup::-webkit-scrollbar-track {
@@ -135,20 +57,13 @@
 }
 
 .sakura-popup::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 2px;
+  background: var(--od-border-strong);
+  border-radius: 999px;
 }
 
-@media (prefers-color-scheme: dark) {
-  .sakura-popup::-webkit-scrollbar-thumb {
-    background: #45475a;
-  }
-}
-
-/* ─── Header ─── */
 .sakura-header {
-  padding: 10px 14px;
-  border-bottom: 1px solid #f3f4f6;
+  padding: 11px 14px 10px;
+  border-bottom: 1px solid var(--od-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -166,9 +81,10 @@
 }
 
 .sakura-original {
-  font-size: 17px;
-  font-weight: 600;
-  color: #111827;
+  font-size: 18px;
+  font-weight: 780;
+  letter-spacing: -0.03em;
+  color: var(--od-text);
   word-break: break-word;
   overflow-wrap: break-word;
   min-width: 0;
@@ -177,7 +93,7 @@
 
 .sakura-phonetic {
   font-size: 13px;
-  color: #6b7280;
+  color: var(--od-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -189,72 +105,61 @@
   flex-shrink: 0;
   width: 28px;
   height: 28px;
-  border: none;
-  background: #f3f4f6;
-  border-radius: 50%;
+  border: 1px solid var(--od-border);
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 999px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s;
+  transition: background 0.18s, border-color 0.18s;
 }
 
 .sakura-audio-btn:hover {
-  background: #e5e7eb;
+  background: var(--od-accent-soft);
+  border-color: rgba(183, 121, 31, 0.22);
 }
 
 .sakura-audio-btn svg {
   width: 16px;
   height: 16px;
-  fill: #6b7280;
+  fill: var(--od-muted);
 }
 
-@media (prefers-color-scheme: dark) {
-  .sakura-audio-btn {
-    background: #313244;
-  }
-  .sakura-audio-btn:hover {
-    background: #45475a;
-  }
-  .sakura-audio-btn svg {
-    fill: #a6adc8;
-  }
-}
-
-/* ─── Translation line ─── */
 .sakura-translation {
-  padding: 8px 14px 6px;
+  padding: 9px 14px 7px;
   overflow: hidden;
 }
 
 .sakura-translation-text {
   font-size: 16px;
-  font-weight: 500;
-  color: #2563eb;
-  background: #eff6ff;
+  font-weight: 720;
+  color: var(--od-accent-strong);
+  background: var(--od-accent-soft);
+  border: 1px solid rgba(183, 121, 31, 0.16);
   display: inline-block;
-  padding: 2px 8px;
-  border-radius: 6px;
+  padding: 3px 9px;
+  border-radius: 10px;
   max-width: 100%;
   word-break: break-word;
   overflow-wrap: break-word;
 }
 
-/* ─── Divider ─── */
 .sakura-divider {
   height: 1px;
-  background: #f3f4f6;
-  margin: 4px 14px;
+  background: var(--od-border);
+  margin: 5px 14px;
 }
 
-/* ─── Meanings (Dictionary) ─── */
-.sakura-meanings {
-  padding: 6px 14px 8px;
+.sakura-meanings,
+.sakura-definitions,
+.sakura-examples {
+  padding: 7px 14px 9px;
   overflow: hidden;
 }
 
 .sakura-meaning-group {
-  margin-bottom: 10px;
+  margin-bottom: 11px;
   overflow: hidden;
 }
 
@@ -264,80 +169,74 @@
 
 .sakura-meaning-pos {
   display: inline-block;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 10px;
+  font-weight: 820;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #e11d48;
-  background: rgba(225, 29, 72, 0.08);
-  padding: 1px 6px;
-  border-radius: 4px;
-  margin-bottom: 4px;
+  letter-spacing: 0.08em;
+  color: var(--od-accent-strong);
+  background: rgba(183, 121, 31, 0.1);
+  border: 1px solid rgba(183, 121, 31, 0.14);
+  padding: 2px 7px;
+  border-radius: 999px;
+  margin-bottom: 5px;
 }
 
-/* Localized translations list (from dt=bd, e.g. "教程；课程") */
 .sakura-translations-list {
   font-size: 14px;
-  color: #1f2937;
-  font-weight: 500;
+  color: #2f281f;
+  font-weight: 660;
   margin: 4px 0 2px 0;
   padding-left: 2px;
   word-break: break-word;
   overflow-wrap: break-word;
-  line-height: 1.6;
+  line-height: 1.65;
 }
 
 .sakura-meaning-def {
   font-size: 13px;
-  color: #374151;
+  color: #3c3429;
   margin: 3px 0;
   padding-left: 2px;
   word-break: break-word;
   overflow-wrap: break-word;
 }
 
-.sakura-meaning-example {
+.sakura-meaning-example,
+.sakura-example-item {
   font-size: 12px;
-  color: #9ca3af;
-  font-style: italic;
-  border-left: 2px solid #e5e7eb;
-  padding-left: 8px;
-  margin: 2px 0 8px 2px;
+  color: var(--od-muted);
+  border-left: 2px solid var(--od-border-strong);
+  padding-left: 9px;
+  margin: 3px 0 8px 2px;
   word-break: break-word;
   overflow-wrap: break-word;
+  line-height: 1.65;
 }
 
-/* ─── Section Title (for Definitions / Examples) ─── */
 .sakura-section-title {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 10px;
+  font-weight: 820;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #9ca3af;
-  margin-bottom: 6px;
-  padding-bottom: 4px;
-  border-bottom: 1px solid #f3f4f6;
-}
-
-/* ─── Definitions (dt=md) ─── */
-.sakura-definitions {
-  padding: 6px 14px 8px;
-  overflow: hidden;
+  letter-spacing: 0.08em;
+  color: var(--od-subtle);
+  margin-bottom: 7px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--od-border);
 }
 
 .sakura-def-item {
   font-size: 13px;
-  color: #374151;
+  color: #3c3429;
   margin: 4px 0;
   padding-left: 2px;
   display: flex;
-  gap: 6px;
-  line-height: 1.5;
+  gap: 7px;
+  line-height: 1.55;
 }
 
 .sakura-def-number {
-  color: #9ca3af;
-  font-weight: 600;
+  color: var(--od-subtle);
+  font-weight: 760;
   flex-shrink: 0;
 }
 
@@ -348,32 +247,13 @@
   overflow-wrap: break-word;
 }
 
-/* ─── Examples (dt=ex) ─── */
-.sakura-examples {
-  padding: 6px 14px 8px;
-  overflow: hidden;
-}
-
-.sakura-example-item {
-  font-size: 12px;
-  color: #6b7280;
-  font-style: italic;
-  border-left: 2px solid #e5e7eb;
-  padding-left: 8px;
-  margin: 4px 0 4px 2px;
-  line-height: 1.6;
-  word-break: break-word;
-  overflow-wrap: break-word;
-}
-
-/* ─── Sentence Mode ─── */
 .sakura-sentence {
-  padding: 14px 14px;
+  padding: 15px 14px;
 }
 
 .sakura-sentence-original {
   font-size: 13px;
-  color: #6b7280;
+  color: var(--od-muted);
   margin-bottom: 8px;
   line-height: 1.6;
   word-break: break-word;
@@ -381,21 +261,20 @@
 
 .sakura-sentence-translation {
   font-size: 15px;
-  color: #1f2937;
-  line-height: 1.7;
+  color: #2b261f;
+  line-height: 1.75;
   word-break: break-word;
 }
 
-/* ─── Loading ─── */
 .sakura-loading {
-  padding: 20px 14px;
+  padding: 22px 14px;
   text-align: center;
 }
 
 .sakura-loading-bar {
-  height: 3px;
-  background: #f3f4f6;
-  border-radius: 2px;
+  height: 4px;
+  background: rgba(232, 221, 204, 0.86);
+  border-radius: 999px;
   overflow: hidden;
   position: relative;
 }
@@ -406,31 +285,29 @@
   left: 0;
   top: 0;
   height: 100%;
-  width: 40%;
-  background: #2563eb;
-  border-radius: 2px;
+  width: 38%;
+  background: linear-gradient(90deg, var(--od-accent), #d4af37);
+  border-radius: inherit;
   animation: sakura-loading-slide 1s ease-in-out infinite;
 }
 
-/* ─── Error ─── */
 .sakura-error {
-  padding: 14px 14px;
+  padding: 15px 14px;
   font-size: 13px;
-  color: #ef4444;
+  color: var(--od-danger);
   text-align: center;
 }
 
-/* ─── Brand ─── */
 .sakura-brand {
-  padding: 4px 14px 6px;
+  padding: 5px 14px 7px;
   text-align: right;
   font-size: 10px;
-  color: #d1d5db;
-  letter-spacing: 0.3px;
+  color: var(--od-subtle);
+  letter-spacing: 0.04em;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 4px;
+  gap: 5px;
 }
 
 .sakura-brand-icon {
@@ -438,45 +315,110 @@
   vertical-align: middle;
 }
 
-/* ─── Engine Badge ─── */
 .sakura-engine-badge {
   display: inline-block;
   font-size: 9px;
-  font-weight: 600;
-  padding: 1px 5px;
-  border-radius: 3px;
-  letter-spacing: 0.2px;
+  font-weight: 760;
+  padding: 1px 6px;
+  border-radius: 999px;
+  letter-spacing: 0.03em;
 }
 
 .sakura-engine-google {
-  color: #2563eb;
-  background: rgba(37, 99, 235, 0.1);
+  color: var(--od-accent-strong);
+  background: rgba(183, 121, 31, 0.1);
+  border: 1px solid rgba(183, 121, 31, 0.14);
 }
 
-@media (prefers-color-scheme: dark) {
-  .sakura-engine-google {
-    color: #89b4fa;
-    background: rgba(137, 180, 250, 0.1);
-  }
-}
-
-/* ─── Animations ─── */
 @keyframes sakura-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(5px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes sakura-loading-slide {
-  0% {
-    left: -40%;
+  0% { left: -40%; }
+  100% { left: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sakura-popup,
+  .sakura-loading-bar::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
   }
-  100% {
-    left: 100%;
+}
+
+@media (prefers-color-scheme: dark) {
+  :host {
+    --od-bg: #1c1917;
+    --od-surface: #292524;
+    --od-text: #f8f1e6;
+    --od-muted: #c5b8a5;
+    --od-subtle: #9f907d;
+    --od-border: #403832;
+    --od-border-strong: #5c5045;
+    --od-accent: #d4af37;
+    --od-accent-strong: #f2c94c;
+    --od-accent-soft: rgba(212, 175, 55, 0.14);
+    --od-danger: #ffb4a8;
+    --od-shadow: 0 22px 64px rgba(0, 0, 0, 0.42), 0 3px 14px rgba(0, 0, 0, 0.28);
+  }
+
+  .sakura-popup {
+    background: #1c1917;
+    border-color: var(--od-border);
+    color: var(--od-text);
+  }
+
+  .sakura-header,
+  .sakura-divider,
+  .sakura-section-title {
+    border-bottom-color: var(--od-border) !important;
+  }
+
+  .sakura-divider {
+    background: var(--od-border) !important;
+  }
+
+  .sakura-original,
+  .sakura-translations-list,
+  .sakura-meaning-def,
+  .sakura-def-item,
+  .sakura-sentence-translation {
+    color: #f4eadc !important;
+  }
+
+  .sakura-phonetic,
+  .sakura-meaning-example,
+  .sakura-example-item,
+  .sakura-brand,
+  .sakura-sentence-original {
+    color: var(--od-muted) !important;
+  }
+
+  .sakura-translation-text,
+  .sakura-meaning-pos,
+  .sakura-engine-google {
+    color: var(--od-accent-strong) !important;
+    background: var(--od-accent-soft) !important;
+    border-color: rgba(212, 175, 55, 0.2) !important;
+  }
+
+  .sakura-meaning-example,
+  .sakura-example-item {
+    border-left-color: var(--od-border-strong) !important;
+  }
+
+  .sakura-loading-bar {
+    background: #403832 !important;
+  }
+
+  .sakura-loading-bar::after {
+    background: linear-gradient(90deg, var(--od-accent), #f2c94c) !important;
+  }
+
+  .sakura-error {
+    color: var(--od-danger) !important;
   }
 }

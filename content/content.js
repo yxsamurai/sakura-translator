@@ -691,77 +691,46 @@
   // even if the external stylesheet fails to load.
   // Includes dark mode support via prefers-color-scheme media query.
   const CRITICAL_POPUP_CSS = `
-    :host {
-      position: fixed;
-      z-index: 2147483647;
-      pointer-events: none;
-    }
+    :host { position: fixed; z-index: 2147483647; pointer-events: none; }
     .sakura-popup {
-      pointer-events: auto;
-      position: absolute;
-      min-width: 280px;
-      max-width: 420px;
-      max-height: 400px;
-      overflow-y: auto;
-      overflow-x: hidden;
-      background: #ffffff;
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
-      padding: 6px;
-      color: #1f2937;
-      font-size: 14px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans SC', sans-serif;
-      line-height: 1.5;
-      word-wrap: break-word;
-      overflow-wrap: break-word;
-      box-sizing: border-box;
+      pointer-events: auto; position: absolute; min-width: 292px; max-width: 440px; max-height: 420px;
+      overflow-y: auto; overflow-x: hidden; background: #fffaf2; border: 1px solid #e8ddcc;
+      border-radius: 18px; box-shadow: 0 20px 60px rgba(41, 27, 8, 0.18), 0 3px 12px rgba(41, 27, 8, 0.1);
+      padding: 7px; color: #171717; font-size: 14px;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Nunito Sans', Roboto, 'Helvetica Neue', Arial, 'Noto Sans SC', sans-serif;
+      line-height: 1.5; word-wrap: break-word; overflow-wrap: break-word; box-sizing: border-box;
     }
-    .sakura-popup * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: inherit;
-      line-height: 1.5;
-    }
-    .sakura-header { padding: 10px 14px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; justify-content: space-between; gap: 8px; overflow: hidden; }
+    .sakura-popup * { box-sizing: border-box; margin: 0; padding: 0; font-family: inherit; line-height: 1.5; }
+    .sakura-header { padding: 11px 14px 10px; border-bottom: 1px solid #e8ddcc; display: flex; align-items: center; justify-content: space-between; gap: 8px; overflow: hidden; }
     .sakura-header-left { display: flex; align-items: baseline; gap: 10px; flex: 1; min-width: 0; overflow: hidden; }
-    .sakura-original { font-size: 17px; font-weight: 600; word-break: break-word; }
-    .sakura-phonetic { font-size: 13px; color: #6b7280; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 1; min-width: 0; }
-    .sakura-translation { padding: 8px 14px 6px; }
-    .sakura-translation-text { font-size: 16px; font-weight: 500; color: #2563eb; background: #eff6ff; display: inline-block; padding: 2px 8px; border-radius: 6px; }
-    .sakura-divider { height: 1px; background: #f3f4f6; margin: 4px 14px; }
-    .sakura-meanings { padding: 6px 14px 8px; }
-    .sakura-meaning-group { margin-bottom: 10px; }
-    .sakura-meaning-pos { display: inline-block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #e11d48; background: rgba(225, 29, 72, 0.08); padding: 1px 6px; border-radius: 4px; margin-bottom: 4px; }
-    .sakura-translations-list { font-size: 14px; font-weight: 500; margin: 4px 0 2px 0; line-height: 1.6; }
-    .sakura-def-item { font-size: 13px; margin: 4px 0; display: flex; gap: 6px; }
-    .sakura-def-number { color: #9ca3af; font-weight: 600; flex-shrink: 0; }
+    .sakura-original { font-size: 18px; font-weight: 780; letter-spacing: -0.03em; color: #171717; word-break: break-word; }
+    .sakura-phonetic { font-size: 13px; color: #62594c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 1; min-width: 0; }
+    .sakura-translation { padding: 9px 14px 7px; }
+    .sakura-translation-text { font-size: 16px; font-weight: 720; color: #8a520f; background: #fff1d6; border: 1px solid rgba(183, 121, 31, 0.16); display: inline-block; padding: 3px 9px; border-radius: 10px; }
+    .sakura-divider { height: 1px; background: #e8ddcc; margin: 5px 14px; }
+    .sakura-meanings { padding: 7px 14px 9px; }
+    .sakura-meaning-group { margin-bottom: 11px; }
+    .sakura-meaning-pos { display: inline-block; font-size: 10px; font-weight: 820; text-transform: uppercase; letter-spacing: 0.08em; color: #8a520f; background: rgba(183, 121, 31, 0.1); border: 1px solid rgba(183, 121, 31, 0.14); padding: 2px 7px; border-radius: 999px; margin-bottom: 5px; }
+    .sakura-translations-list { font-size: 14px; font-weight: 660; margin: 4px 0 2px 0; line-height: 1.65; color: #2f281f; }
+    .sakura-def-item { font-size: 13px; margin: 4px 0; display: flex; gap: 7px; color: #3c3429; }
+    .sakura-def-number { color: #8b8174; font-weight: 760; flex-shrink: 0; }
     .sakura-def-text { flex: 1; min-width: 0; word-break: break-word; }
-    .sakura-meaning-example { font-size: 12px; color: #9ca3af; font-style: italic; border-left: 2px solid #e5e7eb; padding-left: 8px; margin: 2px 0 8px 2px; }
-    .sakura-section-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #9ca3af; margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px solid #f3f4f6; }
-    .sakura-example-item { font-size: 12px; color: #6b7280; font-style: italic; border-left: 2px solid #e5e7eb; padding-left: 8px; margin: 4px 0 4px 2px; line-height: 1.6; }
-    .sakura-brand { padding: 4px 14px 6px; text-align: right; font-size: 10px; color: #d1d5db; display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
+    .sakura-meaning-example { font-size: 12px; color: #62594c; border-left: 2px solid #d8c8ae; padding-left: 9px; margin: 3px 0 8px 2px; }
+    .sakura-section-title { font-size: 10px; font-weight: 820; text-transform: uppercase; letter-spacing: 0.08em; color: #8b8174; margin-bottom: 7px; padding-bottom: 5px; border-bottom: 1px solid #e8ddcc; }
+    .sakura-example-item { font-size: 12px; color: #62594c; border-left: 2px solid #d8c8ae; padding-left: 9px; margin: 3px 0 8px 2px; line-height: 1.65; }
+    .sakura-sentence { padding: 15px 14px; }
+    .sakura-sentence-translation { font-size: 15px; color: #2b261f; line-height: 1.75; word-break: break-word; }
+    .sakura-brand { padding: 5px 14px 7px; text-align: right; font-size: 10px; color: #8b8174; display: flex; align-items: center; justify-content: flex-end; gap: 5px; letter-spacing: 0.04em; }
     .sakura-brand-icon { flex-shrink: 0; vertical-align: middle; }
     @media (prefers-color-scheme: dark) {
-      .sakura-popup {
-        background: #1e1e2e;
-        border-color: #313244;
-        color: #cdd6f4;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
-      }
-      .sakura-header { border-bottom-color: #313244; }
-      .sakura-original { color: #cdd6f4; }
-      .sakura-phonetic { color: #a6adc8; }
-      .sakura-translation-text { color: #89b4fa; background: rgba(137, 180, 250, 0.1); }
-      .sakura-divider { background: #313244; }
-      .sakura-meaning-pos { color: #f38ba8; background: rgba(243, 139, 168, 0.1); }
-      .sakura-translations-list { color: #cdd6f4; }
-      .sakura-def-item { color: #bac2de; }
-      .sakura-meaning-example { color: #a6adc8; border-left-color: #45475a; }
-      .sakura-section-title { color: #a6adc8; border-bottom-color: #313244; }
-      .sakura-example-item { color: #a6adc8; border-left-color: #45475a; }
-      .sakura-brand { color: #585b70; }
+      .sakura-popup { background: #1c1917; border-color: #403832; color: #f8f1e6; box-shadow: 0 22px 64px rgba(0, 0, 0, 0.42), 0 3px 14px rgba(0, 0, 0, 0.28); }
+      .sakura-header { border-bottom-color: #403832; }
+      .sakura-original, .sakura-translations-list, .sakura-def-item, .sakura-sentence-translation { color: #f4eadc; }
+      .sakura-phonetic, .sakura-meaning-example, .sakura-example-item, .sakura-brand { color: #c5b8a5; }
+      .sakura-translation-text, .sakura-meaning-pos { color: #f2c94c; background: rgba(212, 175, 55, 0.14); border-color: rgba(212, 175, 55, 0.2); }
+      .sakura-divider { background: #403832; }
+      .sakura-section-title { color: #9f907d; border-bottom-color: #403832; }
+      .sakura-meaning-example, .sakura-example-item { border-left-color: #5c5045; }
     }
   `;
 

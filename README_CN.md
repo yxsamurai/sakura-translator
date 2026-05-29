@@ -72,6 +72,10 @@
 |-----|------|------|
 | [Google Translate](https://translate.googleapis.com/) | 多语言翻译，提供扩展词典数据 | 免费 |
 
+## 设计系统
+
+弹窗和页面内翻译浮层遵循 Open Design 启发的 `Modern Minimal + Soft Warm` 方向。`DESIGN.md` 是设计源文件，定义了 `--od-*` tokens、组件规则和 anti-slop 检查清单。
+
 ## 📁 项目结构
 
 ```
