@@ -486,7 +486,7 @@ textarea:focus-visible {
 
 .shortcut-row:hover {
   border-color: var(--od-border-strong);
-  background: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 250, 242, 0.72);
 }
 
 .shortcut-action {
@@ -667,6 +667,11 @@ textarea:focus-visible {
   .result-translations-list,
   .result-sentence-text {
     color: #efe7db;
+  }
+
+  .shortcut-row:hover {
+    border-color: var(--od-border-strong);
+    background: rgba(54, 48, 43, 0.86);
   }
 
   .mode-tabs {
