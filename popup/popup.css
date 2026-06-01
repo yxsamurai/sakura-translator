@@ -47,6 +47,10 @@ body {
 }
 
 .header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 18px 18px 12px;
 }
 
@@ -291,45 +295,42 @@ textarea:focus-visible {
   padding: 8px 0;
 }
 
-.settings-toggle {
-  display: flex;
-  justify-content: flex-end;
-  padding: 0 18px 8px;
-}
-
 .settings-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border: 1px solid transparent;
   background: transparent;
   border-radius: 999px;
-  color: var(--od-muted);
-  transition: color 0.18s, background 0.18s, border-color 0.18s, transform 0.28s;
+  color: var(--od-subtle);
+  flex-shrink: 0;
+  opacity: 0.78;
+  transition: color 0.18s, background 0.18s, border-color 0.18s, opacity 0.18s;
 }
 
 .settings-btn:hover {
   color: var(--od-text);
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 250, 242, 0.58);
   border-color: var(--od-border);
+  opacity: 1;
 }
 
 .settings-btn.active {
   color: var(--od-accent-strong);
-  background: var(--od-accent-soft);
-  border-color: rgba(183, 121, 31, 0.18);
-  transform: rotate(60deg);
+  background: rgba(212, 175, 55, 0.1);
+  border-color: rgba(212, 175, 55, 0.18);
+  opacity: 1;
 }
 
 .settings-panel {
   margin: 0 18px 14px;
-  padding: 14px;
-  background: rgba(255, 255, 255, 0.64);
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.58);
   border: 1px solid var(--od-border);
-  border-radius: var(--od-radius-lg);
-  box-shadow: var(--od-shadow);
+  border-radius: 16px;
+  box-shadow: 0 14px 36px rgba(41, 27, 8, 0.1), 0 1px 5px rgba(41, 27, 8, 0.06);
   backdrop-filter: blur(18px);
   animation: settings-slide-in 0.22s ease-out;
 }
@@ -340,7 +341,7 @@ textarea:focus-visible {
 }
 
 .settings-section {
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .settings-section:last-child {
@@ -349,10 +350,10 @@ textarea:focus-visible {
 
 .settings-label {
   display: block;
-  font-size: 11px;
-  font-weight: 820;
-  color: var(--od-text);
-  margin-bottom: 8px;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--od-muted);
+  margin-bottom: 6px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -421,11 +422,11 @@ textarea:focus-visible {
 
 .mode-tabs {
   display: flex;
-  gap: 4px;
-  background: rgba(246, 239, 227, 0.86);
+  gap: 3px;
+  background: rgba(246, 239, 227, 0.7);
   border: 1px solid var(--od-border);
   border-radius: var(--od-radius-md);
-  padding: 4px;
+  padding: 3px;
 }
 
 .mode-tab {
@@ -433,12 +434,12 @@ textarea:focus-visible {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 8px 9px;
+  gap: 5px;
+  padding: 7px 8px;
   border: none;
   border-radius: var(--od-radius-sm);
   font-size: 12px;
-  font-weight: 760;
+  font-weight: 740;
   font-family: inherit;
   color: var(--od-muted);
   background: transparent;
@@ -460,16 +461,13 @@ textarea:focus-visible {
 }
 
 .mode-description {
-  font-size: 12px;
-  color: var(--od-muted);
-  margin-bottom: 10px;
-  line-height: 1.55;
+  display: none;
 }
 
 .shortcut-grid {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 6px;
 }
 
 .shortcut-row {
@@ -477,10 +475,10 @@ textarea:focus-visible {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 9px 10px;
+  padding: 7px 9px;
   border: 1px solid var(--od-border);
   border-radius: var(--od-radius-md);
-  background: rgba(255, 255, 255, 0.62);
+  background: rgba(255, 250, 242, 0.34);
   transition: border-color 0.18s, background 0.18s;
 }
 
@@ -492,9 +490,9 @@ textarea:focus-visible {
 .shortcut-action {
   display: flex;
   align-items: center;
-  gap: 7px;
-  font-size: 13px;
-  font-weight: 720;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
   color: var(--od-text);
 }
 
@@ -508,19 +506,15 @@ textarea:focus-visible {
 
 .key-select {
   width: auto;
-  min-width: 94px;
+  min-width: 82px;
+  padding: 6px 9px;
   color: var(--od-accent-strong);
-  font-weight: 760;
+  font-weight: 740;
   text-align: center;
 }
 
 .mode-hint {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 9px;
-  font-size: 11px;
-  color: var(--od-subtle);
+  display: none;
 }
 
 .pdf-toggle-row {
@@ -528,14 +522,14 @@ textarea:focus-visible {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 3px 0;
+  padding: 1px 0;
 }
 
 .pdf-toggle-label {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 650;
   color: var(--od-text);
 }
@@ -646,6 +640,10 @@ textarea:focus-visible {
   .shortcut-row,
   .mode-tab.active {
     background: rgba(41, 37, 36, 0.78);
+  }
+
+  .shortcut-row {
+    background: rgba(41, 37, 36, 0.42);
   }
 
   textarea:focus,

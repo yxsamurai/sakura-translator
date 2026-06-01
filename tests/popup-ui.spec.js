@@ -5,8 +5,9 @@ const { expect } = require('@playwright/test');
 const { test } = require('./fixtures');
 
 test.describe('Popup — Layout', () => {
-  test('renders header with logo', async ({ popup }) => {
+  test('renders header with logo and settings button', async ({ popup }) => {
     await expect(popup.locator('.logo')).toContainText('Sakura Translator');
+    await expect(popup.locator('.header > #settingsBtn')).toBeVisible();
   });
 
   test('renders input textarea and translate button', async ({ popup }) => {
@@ -91,6 +92,13 @@ test.describe('Popup — Hint Text', () => {
     await popup.locator('#settingsBtn').click();
     await popup.locator('#modeTabManual').click();
     await expect(popup.locator('.hint')).toContainText('before selecting');
+  });
+
+  test('manual settings avoid duplicate helper copy', async ({ popup }) => {
+    await popup.locator('#settingsBtn').click();
+    await popup.locator('#modeTabManual').click();
+    await expect(popup.locator('#manualOptions .mode-description')).not.toBeVisible();
+    await expect(popup.locator('#manualOptions .mode-hint')).not.toBeVisible();
   });
 });
 
