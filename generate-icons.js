@@ -2,8 +2,11 @@
  * Icon Generator for Sakura Translator
  * Run: node generate-icons.js
  *
- * Generates a minimalist sakura (cherry blossom) icon on a rounded-corner
- * background for better recognizability at all sizes.
+ * Generates Open Design-inspired Sakura Translator icons:
+ * - warm paper surface from DESIGN.md
+ * - restrained ink/gold accents
+ * - central cherry blossom motif
+ *
  * Pure Node.js — no external dependencies.
  */
 
@@ -11,12 +14,17 @@ const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
 
-// ─── Colour palette ───
-const BG_R = 44, BG_G = 42, BG_B = 56;                 // #2c2a38 – dark slate background
-const PETAL_R = 237, PETAL_G = 100, PETAL_B = 140;      // #ed648c – deeper petal edge
-const PETAL2_R = 252, PETAL2_G = 185, PETAL2_B = 210;   // #fcb9d2 – soft petal inner (lighter)
-const CENTER_R = 255, CENTER_G = 210, CENTER_B = 100;   // #ffd264 – warm golden centre
-const CENTER2_R = 255, CENTER2_G = 180, CENTER2_B = 60; // #ffb43c – darker centre edge
+// ─── Open Design-inspired palette ───
+const PAPER_TOP = [255, 250, 242];       // #fffaf2
+const PAPER_BOTTOM = [246, 239, 227];    // #f6efe3
+const BORDER = [232, 221, 204];          // #e8ddcc
+const INK = [23, 23, 23];                // #171717
+const MUTED = [98, 89, 76];              // #62594c
+const GOLD = [212, 175, 55];             // #d4af37
+const GOLD_DARK = [138, 82, 15];         // #8a520f
+const PETAL_INNER = [252, 220, 225];     // restrained sakura blush
+const PETAL_OUTER = [214, 132, 146];     // muted petal edge
+const PETAL_SHADOW = [120, 72, 78];
 
 // ─── Math helpers ───
 const PI = Math.PI;
@@ -26,6 +34,21 @@ const sqrt = Math.sqrt;
 
 function clamp(v) { return Math.max(0, Math.min(255, Math.round(v))); }
 function lerp(a, b, t) { return a + (b - a) * t; }
+function mixColor(a, b, t) {
+  return [
+    clamp(lerp(a[0], b[0], t)),
+    clamp(lerp(a[1], b[1], t)),
+    clamp(lerp(a[2], b[2], t)),
+  ];
+}
+
+function alphaBlend(base, over, alpha) {
+  return [
+    clamp(lerp(base[0], over[0], alpha)),
+    clamp(lerp(base[1], over[1], alpha)),
+    clamp(lerp(base[2], over[2], alpha)),
+  ];
+}
 
 /**
  * Signed distance to a rounded rectangle centred at (cx, cy).
@@ -36,133 +59,163 @@ function sdRoundedRect(px, py, cx, cy, halfW, halfH, radius) {
   const dy = Math.abs(py - cy) - halfH + radius;
   const outsideDist = sqrt(Math.max(dx, 0) ** 2 + Math.max(dy, 0) ** 2) - radius;
   const insideDist = Math.min(Math.max(dx, dy), 0) - radius;
-  // insideDist is negative when inside, outsideDist used when outside
   return outsideDist > 0 ? outsideDist : insideDist;
 }
 
 /**
  * Check if (px, py) falls inside a petal.
- * Returns normalised distance squared (0 at centre, 1 at edge), or > 1 if outside.
+ * Returns normalized distance squared (0 at petal centre, 1 at edge), or > 1 if outside.
  */
 function petalDist(px, py, cx, cy, angle, petalLen, petalWidth) {
   const dx = px - cx;
   const dy = py - cy;
-  // Rotate into petal-local coordinates
-  const lx = dx * cos(-angle) - dy * sin(-angle);
-  const ly = dx * sin(-angle) + dy * cos(-angle);
 
-  // Petal is an ellipse centred along the petal axis
-  const ey = petalLen * 0.46;
-  const ry = petalLen * 0.56;
+  // Petal-local axis points along angle.
+  const axial = dx * cos(angle) + dy * sin(angle);
+  const perpendicular = -dx * sin(angle) + dy * cos(angle);
+
+  const petalCenter = petalLen * 0.42;
+  const ry = petalLen * 0.52;
   const rx = petalWidth;
 
-  const nx = lx / rx;
-  const ny = (ly - ey) / ry;
+  const nx = perpendicular / rx;
+  const ny = (axial - petalCenter) / ry;
   return (nx * nx + ny * ny);
 }
 
 /**
- * Check if point is in the "notch" (heart-shaped cleft at petal tip).
+ * Check if point is in the subtle heart-shaped cleft at a petal tip.
  */
 function inNotch(px, py, cx, cy, angle, petalLen, scale) {
-  const tipDist = petalLen * 0.90;
+  const tipDist = petalLen * 0.88;
   const tipX = cx + cos(angle) * tipDist;
   const tipY = cy + sin(angle) * tipDist;
-  const notchR = 6.0 * scale;
+  const notchR = 5.4 * scale;
   const ndx = px - tipX;
   const ndy = py - tipY;
   return (ndx * ndx + ndy * ndy) <= (notchR * notchR);
 }
 
+function backgroundColor(x, y, size) {
+  const vertical = y / Math.max(1, size - 1);
+  let color = mixColor(PAPER_TOP, PAPER_BOTTOM, vertical);
+
+  // Restrained warm light source, matching the app UI's soft-warm surface.
+  const dx = x - size * 0.18;
+  const dy = y - size * 0.08;
+  const light = Math.max(0, 1 - sqrt(dx * dx + dy * dy) / (size * 0.72));
+  color = alphaBlend(color, [255, 245, 216], light * 0.18);
+
+  return color;
+}
+
 /**
- * Determine pixel colour for the sakura icon at (x, y) on a canvas of `size` px.
+ * Determine pixel colour for the icon at (x, y) on a canvas of `size` px.
  * Returns [r, g, b, a].
  */
-function sakuraPixel(x, y, size) {
+function iconPixel(x, y, size) {
   const cx = size / 2;
   const cy = size / 2;
   const scale = size / 128;
 
-  // ─── Rounded-corner background ───
+  // ─── Rounded paper tile ───
   const margin = 4 * scale;
   const halfSize = size / 2 - margin;
-  const cornerR = 22 * scale;  // generous rounded corners
+  const cornerR = 24 * scale;
   const bgDist = sdRoundedRect(x, y, cx, cy, halfSize, halfSize, cornerR);
 
   if (bgDist > 1.0) {
-    return [0, 0, 0, 0]; // outside rounded rect — transparent
+    return [0, 0, 0, 0];
   }
 
-  // Anti-alias the rounded rect edge
   let bgAlpha = 255;
   if (bgDist > -1.0) {
     bgAlpha = clamp(255 * (1.0 - (bgDist + 1.0) / 2.0));
   }
 
-  // ─── Sakura flower ───
-  const petalLen = 46 * scale;
-  const petalWidth = 21 * scale;
-  const numPetals = 5;
-  const centerRadius = 11 * scale;
+  let color = backgroundColor(x, y, size);
 
-  const dx = x - cx;
-  const dy = y - cy;
+  // Paper tile border.
+  if (bgDist > -2.2 * scale) {
+    const borderT = 1 - Math.min(Math.abs(bgDist) / (2.2 * scale), 1);
+    color = alphaBlend(color, BORDER, borderT * 0.82);
+  }
+
+  // Subtle bottom-right depth, kept restrained for Open Design consistency.
+  const depth = Math.max(0, (x + y - size * 1.15) / (size * 0.85));
+  color = alphaBlend(color, [214, 200, 174], Math.min(depth, 1) * 0.12);
+
+  // ─── Minimal ink branch behind the blossom ───
+  const branchY = cy + 20 * scale + (x - cx) * 0.18;
+  const branchWidth = 2.0 * scale;
+  const onBranch = x > cx - 39 * scale && x < cx + 32 * scale && Math.abs(y - branchY) <= branchWidth;
+  if (onBranch) {
+    const edge = Math.abs(y - branchY) / branchWidth;
+    color = alphaBlend(color, MUTED, (1 - edge) * 0.46);
+  }
+
+  // ─── Sakura flower ───
+  const flowerCx = cx;
+  const flowerCy = cy - 3 * scale;
+  const petalLen = 43 * scale;
+  const petalWidth = 19 * scale;
+  const numPetals = 5;
+  const centerRadius = 10.5 * scale;
+
+  const dx = x - flowerCx;
+  const dy = y - flowerCy;
   const dist = sqrt(dx * dx + dy * dy);
 
-  // Check petals
-  let bestPetal = -1;
+  // Petal shadow first.
+  let shadowAlpha = 0;
+  for (let i = 0; i < numPetals; i++) {
+    const angle = (2 * PI * i) / numPetals - PI / 2;
+    const d = petalDist(x + 1.4 * scale, y + 2.0 * scale, flowerCx, flowerCy, angle, petalLen, petalWidth);
+    if (d <= 1.06) {
+      shadowAlpha = Math.max(shadowAlpha, (1.06 - d) / 1.06 * 0.16);
+    }
+  }
+  if (shadowAlpha > 0) {
+    color = alphaBlend(color, PETAL_SHADOW, shadowAlpha);
+  }
+
+  // Check petals.
   let bestDist = 999;
   for (let i = 0; i < numPetals; i++) {
     const angle = (2 * PI * i) / numPetals - PI / 2;
-    const d = petalDist(x, y, cx, cy, angle, petalLen, petalWidth);
-    if (d <= 1.0 && d < bestDist) {
-      if (!inNotch(x, y, cx, cy, angle, petalLen, scale)) {
-        bestPetal = i;
-        bestDist = d;
-      }
+    const d = petalDist(x, y, flowerCx, flowerCy, angle, petalLen, petalWidth);
+    if (d <= 1.0 && d < bestDist && !inNotch(x, y, flowerCx, flowerCy, angle, petalLen, scale)) {
+      bestDist = d;
     }
   }
 
-  if (bestPetal >= 0) {
-    // Radial gradient: lighter near centre, deeper pink at tips
-    const t = Math.min(dist / (petalLen * 0.85), 1.0);
-    const r = clamp(lerp(PETAL2_R, PETAL_R, t));
-    const g = clamp(lerp(PETAL2_G, PETAL_G, t));
-    const b = clamp(lerp(PETAL2_B, PETAL_B, t));
-
-    // Soft anti-alias at petal edge
-    let petalAlpha = 255;
-    if (bestDist > 0.90) {
-      petalAlpha = clamp(255 * (1.0 - (bestDist - 0.90) / 0.10));
+  if (bestDist <= 1.0) {
+    const radial = Math.min(dist / (petalLen * 0.82), 1.0);
+    const petalColor = mixColor(PETAL_INNER, PETAL_OUTER, radial);
+    let petalAlpha = 0.98;
+    if (bestDist > 0.88) {
+      petalAlpha *= Math.max(0, 1.0 - (bestDist - 0.88) / 0.12);
     }
+    color = alphaBlend(color, petalColor, petalAlpha);
 
-    // Composite petal on background
-    const a = clamp(petalAlpha);
-    const fR = lerp(BG_R, r, a / 255);
-    const fG = lerp(BG_G, g, a / 255);
-    const fB = lerp(BG_B, b, a / 255);
-    return [clamp(fR), clamp(fG), clamp(fB), bgAlpha];
+    // Fine ink edge only near the petal boundary, visible on 48/128 but subtle on 16.
+    if (bestDist > 0.93) {
+      color = alphaBlend(color, INK, (bestDist - 0.93) / 0.07 * 0.08);
+    }
   }
 
-  // ─── Centre dot ───
+  // Centre dot, using the same gold accent as the app UI.
   if (dist <= centerRadius) {
     const t = dist / centerRadius;
-    const r = clamp(lerp(CENTER_R, CENTER2_R, t));
-    const g = clamp(lerp(CENTER_G, CENTER2_G, t));
-    const b = clamp(lerp(CENTER_B, CENTER2_B, t));
-    // Soft edge
-    let alpha = 255;
-    if (t > 0.82) {
-      alpha = clamp(255 * (1.0 - (t - 0.82) / 0.18));
+    const centerColor = mixColor(GOLD, GOLD_DARK, t * 0.55);
+    let alpha = 1.0;
+    if (t > 0.84) {
+      alpha = Math.max(0, 1.0 - (t - 0.84) / 0.16);
     }
-    const fR = lerp(BG_R, r, alpha / 255);
-    const fG = lerp(BG_G, g, alpha / 255);
-    const fB = lerp(BG_B, b, alpha / 255);
-    return [clamp(fR), clamp(fG), clamp(fB), bgAlpha];
+    color = alphaBlend(color, centerColor, alpha);
   }
 
-  // ─── Background fill ───
-  return [BG_R, BG_G, BG_B, bgAlpha];
+  return [color[0], color[1], color[2], bgAlpha];
 }
 
 // ─── PNG generation ───
@@ -203,7 +256,7 @@ function createIDAT(size) {
   for (let y = 0; y < size; y++) {
     raw.push(0); // filter byte: None
     for (let x = 0; x < size; x++) {
-      const pixel = sakuraPixel(x, y, size);
+      const pixel = iconPixel(x, y, size);
       raw.push(pixel[0], pixel[1], pixel[2], pixel[3]);
     }
   }
@@ -243,4 +296,4 @@ if (!fs.existsSync(iconsDir)) {
   console.log(`✓ Generated ${filePath} (${png.length} bytes)`);
 });
 
-console.log('\n🌸 Sakura icons generated successfully.');
+console.log('\nSakura icons generated successfully.');

@@ -847,9 +847,9 @@
     return `<span class="sakura-engine-badge sakura-engine-google">via Google</span>`;
   }
 
-  // ─── Render sakura brand icon (minimalist cherry blossom) ───
+  // ─── Render sakura brand icon (Open Design-inspired cherry blossom) ───
   function renderBrandIcon() {
-    return `<svg class="sakura-brand-icon" width="10" height="10" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><g transform="translate(12,12)"><ellipse rx="3" ry="5.2" fill="#ed648c" opacity="0.85"/><ellipse rx="3" ry="5.2" transform="rotate(72)" fill="#ed648c" opacity="0.85"/><ellipse rx="3" ry="5.2" transform="rotate(144)" fill="#ed648c" opacity="0.85"/><ellipse rx="3" ry="5.2" transform="rotate(216)" fill="#ed648c" opacity="0.85"/><ellipse rx="3" ry="5.2" transform="rotate(288)" fill="#ed648c" opacity="0.85"/><circle r="2" fill="#ffc457"/></g></svg>`;
+    return `<svg class="sakura-brand-icon" width="10" height="10" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" fill="#fffaf2" stroke="#e8ddcc"/><path d="M6.8 16.2c3.2-1.1 6.8-2.2 10.4-1.6" stroke="#62594c" stroke-width="1.2" stroke-linecap="round" opacity="0.42"/><g transform="translate(12,10.8)"><ellipse rx="2.35" ry="4.15" fill="#d68492" opacity="0.94"/><ellipse rx="2.35" ry="4.15" transform="rotate(72)" fill="#d68492" opacity="0.94"/><ellipse rx="2.35" ry="4.15" transform="rotate(144)" fill="#d68492" opacity="0.94"/><ellipse rx="2.35" ry="4.15" transform="rotate(216)" fill="#d68492" opacity="0.94"/><ellipse rx="2.35" ry="4.15" transform="rotate(288)" fill="#d68492" opacity="0.94"/><circle r="1.75" fill="#d4af37"/></g></svg>`;
   }
 
   // ─── Merge word data from different Google response blocks ───
