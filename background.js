@@ -84,6 +84,7 @@ function extractFileName(url) {
 
 // ─── API Endpoints ───
 const GOOGLE_TRANSLATE_API = 'https://translate.googleapis.com/translate_a/single';
+const MYMEMORY_API = 'https://api.mymemory.translated.net/get';
 
 // ─── Supported Languages ───
 const SUPPORTED_LANGUAGES = {
@@ -269,6 +270,12 @@ async function translateWord(word, detectedLang, sourceLang, targetLang) {
     if (googleResult.examples && googleResult.examples.length > 0) {
       result.examples = googleResult.examples;
     }
+  } else {
+    const fallback = await fetchMyMemory(word, direction.from, direction.to);
+    if (fallback) {
+      result.translation = fallback;
+      result.engine = 'mymemory';
+    }
   }
 
   return result;
@@ -279,12 +286,19 @@ async function translateSentence(text, detectedLang, sourceLang, targetLang) {
   const direction = resolveTranslationDirection(detectedLang, sourceLang, targetLang);
   const googleResult = await fetchGoogleExtended(text, direction.from, direction.to, ['t']);
 
+  let translation = googleResult && googleResult.translation;
+  let engine = 'google';
+  if (!translation) {
+    translation = await fetchMyMemory(text, direction.from, direction.to);
+    if (translation) engine = 'mymemory';
+  }
+
   return {
     type: 'sentence',
     original: text,
-    translation: (googleResult && googleResult.translation) || 'Translation failed.',
+    translation: translation || 'Translation failed.',
     lang: detectedLang,
-    engine: 'google'
+    engine
   };
 }
 
@@ -456,6 +470,48 @@ function mapToGoogleLang(lang) {
     'zh': 'zh-CN',
     'mixed': 'auto',
     'auto': 'auto'
+  };
+  return map[lang] || lang;
+}
+
+/**
+ * Fallback translation via MyMemory (free, no API key).
+ * Used when the Google Translate endpoint is blocked/rate-limited.
+ * Returns the translated text, or null on failure.
+ */
+async function fetchMyMemory(text, fromLang, toLang) {
+  const src = mapToMyMemoryLang(fromLang);
+  const tgt = mapToMyMemoryLang(toLang);
+
+  const url = new URL(MYMEMORY_API);
+  url.searchParams.set('q', text);
+  url.searchParams.set('langpair', `${src}|${tgt}`);
+
+  try {
+    const response = await fetch(url.toString(), {
+      signal: AbortSignal.timeout(8000)
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (data && data.responseStatus === 200 && data.responseData && data.responseData.translatedText) {
+      return data.responseData.translatedText;
+    }
+    return null;
+  } catch (e) {
+    console.warn('[Sakura] MyMemory API error:', e.message);
+    return null;
+  }
+}
+
+/**
+ * Map internal language codes to MyMemory codes.
+ * MyMemory uses 'autodetect' for auto source and 'zh-CN' for Chinese.
+ */
+function mapToMyMemoryLang(lang) {
+  const map = {
+    'zh': 'zh-CN',
+    'mixed': 'autodetect',
+    'auto': 'autodetect'
   };
   return map[lang] || lang;
 }

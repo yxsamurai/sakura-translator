@@ -14,7 +14,8 @@
     "webNavigation"
   ],
   "host_permissions": [
-    "https://translate.googleapis.com/*"
+    "https://translate.googleapis.com/*",
+    "https://api.mymemory.translated.net/*"
   ],
   "background": {
     "service_worker": "background.js"

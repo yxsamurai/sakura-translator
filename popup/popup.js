@@ -474,7 +474,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderResult(result) {
     let html = '';
 
-    const engineBadge = `<div class="result-engine"><span class="engine-badge engine-google">via Google</span></div>`;
+    const engine = result.engine === 'mymemory' ? 'mymemory' : 'google';
+    const engineBadge = `<div class="result-engine"><span class="engine-badge engine-${engine}">via ${engine === 'mymemory' ? 'MyMemory' : 'Google'}</span></div>`;
 
     if (result.type === 'word') {
       html += '<div class="result-word">';

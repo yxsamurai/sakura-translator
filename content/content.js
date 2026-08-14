@@ -843,8 +843,11 @@
   }
 
   // ─── Render engine badge ───
-  function renderEngineBadge() {
-    return `<span class="sakura-engine-badge sakura-engine-google">via Google</span>`;
+  function renderEngineBadge(engine) {
+    const isMyMemory = engine === 'mymemory';
+    const label = isMyMemory ? 'MyMemory' : 'Google';
+    const cls = isMyMemory ? 'sakura-engine-mymemory' : 'sakura-engine-google';
+    return `<span class="sakura-engine-badge ${cls}">via ${label}</span>`;
   }
 
   // ─── Render sakura brand icon (Open Design-inspired cherry blossom) ───
@@ -982,7 +985,7 @@
       html += '</div>';
     }
 
-    html += `<div class="sakura-brand">${renderBrandIcon()} Sakura Translator ${renderEngineBadge()}</div>`;
+    html += `<div class="sakura-brand">${renderBrandIcon()} Sakura Translator ${renderEngineBadge(result.engine)}</div>`;
     return html;
   }
 
@@ -992,7 +995,7 @@
       <div class="sakura-sentence">
         <div class="sakura-sentence-translation">${escapeHtml(result.translation)}</div>
       </div>
-      <div class="sakura-brand">${renderBrandIcon()} Sakura Translator ${renderEngineBadge()}</div>
+      <div class="sakura-brand">${renderBrandIcon()} Sakura Translator ${renderEngineBadge(result.engine)}</div>
     `;
   }
 
